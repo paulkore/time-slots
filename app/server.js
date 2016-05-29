@@ -33,7 +33,6 @@ var TimeSlotsApp = function() {
         if (typeof self.port === "undefined") {
             self.port = 8081;
             console.warn('No OPENSHIFT_NODEJS_PORT var, using ' + self.port);
-
         }
     };
 
