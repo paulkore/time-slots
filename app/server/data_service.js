@@ -17,9 +17,9 @@ var TimeSlot = function() {
 	self.id = null; // number: the index of the time slot within the day
 	self.time = null; // number: the start time of the slot, represented is fractional hours
 	self.displayTime = null; // string: the start time of the slot (human-readable)
-	self.peak = false; // boolean: true if this time slot is during "peak" hours
-	self.reg_name = null; // string: the name of the person subscribed
-	self.charge = false; // boolean: true if this time slot is required for charging the machine
+	self.peakTime = null; // boolean: true if this time slot is during "peak" hours
+	self.chargeTime = null; // boolean: true if this time slot is required for charging the machine after it was in use
+	self.memberName = null; // string: the name of the person subscribed
 };
 
 function initData() {
@@ -58,13 +58,16 @@ function initData() {
 			var timeSlot = new TimeSlot();
 			dayData.timeSlots.push(timeSlot);
 
+			timeSlot.day = dayIndex;
 			timeSlot.id = slot.id;
 			timeSlot.time = slot.time;
-			timeSlot.day = dayIndex;
+			timeSlot.displayTime = slot.displayTime;
 
 			// Peak times: Mon-Thurs 9-11am, and 7-9pm
-			timeSlot.peak = (dayIndex >= 1 && dayIndex <= 4) &&
+			var time = timeSlot.time;
+			timeSlot.peakTime = (dayIndex >= 1 && dayIndex <= 4) &&
 				((time >= 9.0 && time < 11.0) || (time >= 19.0 && time < 21.0));
+
 		});
 	});
 }
