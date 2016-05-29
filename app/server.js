@@ -178,18 +178,12 @@ var TimeSlotsApp = function() {
           });
         };
 
-        self.routes['/api/weeks'] = function (req, res) {
-            svc.fetchWeeks(function(rows) {
+        self.routes['/api/slots'] = function (req, res) {
+            svc.fetchSlots(function(rows) {
                 res.json(rows);
             });
         };
 
-        self.routes['/api/weeks/:weekId/bookings'] = function (req, res) {
-            var weekId = req.params.weekId
-            svc.fetchBookings(weekId, function(rows) {
-                res.json(rows);
-            });
-        };
     };
 
 };
