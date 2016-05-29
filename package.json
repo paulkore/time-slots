@@ -1,0 +1,25 @@
+{
+  "name": "time-slots",
+  "version": "1.0.0",
+  "description": "Simple time-slot management application",
+  "author": {
+    "name": "Paul Korepanov",
+    "email": "paul.kore@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulkore/time-slots"
+  },
+  "engines": {
+    "node": ">= 0.6.0",
+    "npm": ">= 1.0.0"
+  },
+  "dependencies": {
+    "express": "~3.4.4",
+    "moment": "^2.10.6",
+    "pg": "^4.4.1"
+  },
+  "devDependencies": {},
+  "bundleDependencies": [],
+  "private": true
+}
