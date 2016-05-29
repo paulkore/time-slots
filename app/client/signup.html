@@ -15,8 +15,22 @@
         <!--<p>{{errorData}}</p>-->
     </div>
     <div ng-if="!errorData">
-        <h3>Response JSON:</h3>
-        <p>{{responseData}}</p>
+        <!--<h3>Response JSON:</h3>-->
+        <!--<p>{{responseData}}</p>-->
+
+        <div class="column left-column">
+            <div class="column-header"></div>
+            <div ng-repeat="slot in slots" class="time-slot left-column-slot">
+                {{slot.displayTime}}
+            </div>
+        </div><!-- hack to remove gaps between inline blocks
+     --><div ng-repeat="day in days" class="column day-column">
+            <div class="column-header">{{day.name}}</div>
+            <div ng-repeat="timeSlot in day.timeSlots" class="time-slot">
+
+            </div>
+        </div>
+
     </div>
 
 </div>

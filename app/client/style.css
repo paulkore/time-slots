@@ -1,3 +1,38 @@
+body {
+    padding: 20px;
+}
+
 .error-msg {
     color: red;
+}
+
+.column {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.left-column {
+    width: 120px;
+}
+
+.day-column {
+    width: 150px;
+}
+
+.column-header {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    height: 30px;
+}
+
+.time-slot {
+    border: solid 1px #222222;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+}
+
+.left-column-slot {
+    font-size: 20px;
 }
