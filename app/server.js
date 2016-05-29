@@ -1,8 +1,8 @@
 #!/bin/env node
 
 var express = require('express');
-var fs      = require('fs');
-var moment  = require('moment');
+var fs = require('fs');
+var moment = require('moment');
 var svc = require('./data_service');
 
 
