@@ -3,8 +3,13 @@ body {
 }
 
 .main-wrapper {
-    width:1100px;
+    width:1150px;
     margin:0 auto;
+}
+
+.page-title {
+    color: darkblue;
+    margin-bottom: 50px;
 }
 
 .error-msg {
@@ -17,7 +22,7 @@ body {
 }
 
 .left-column {
-    width: 180px;
+    width: 200px;
 }
 
 .day-column {
@@ -25,10 +30,13 @@ body {
 }
 
 .column-header {
-    font-size: 20px;
+    color: darkblue;
+    font-size: 22px;
     font-weight: bold;
     text-align: center;
-    height: 30px;
+    height: 40px;
+    line-height: 40px;
+    margin-bottom: 10px;
 }
 
 .time-slot {
@@ -39,7 +47,13 @@ body {
 }
 
 .left-column-slot {
+    color: darkblue;
     font-size: 18px;
+    padding-right: 20px;
+}
+
+.day-column-slot:hover {
+    background: yellow;
 }
 
 .peak-time-slot {

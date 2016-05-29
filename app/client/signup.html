@@ -1,7 +1,8 @@
 <!doctype html>
 <html ng-app='TimeSlotsApp'>
 <head>
-    <title>Sign-up sheet</title>
+    <title>VPTC ball machine sign-up</title>
+
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
     <script src="signup.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css"/>
@@ -9,6 +10,8 @@
 
 <body>
 <div ng-controller="SignupController" class="main-wrapper">
+
+    <h1 class="page-title">Victoria Park Tennis Club - ball machine sign up</h1>
 
     <div ng-if="errorData">
         <h3 class="error-msg">An error occurred</h3>
@@ -26,7 +29,7 @@
         </div><!-- hack to remove gaps between inline blocks
      --><div ng-repeat="day in days" class="column day-column">
             <div class="column-header">{{day.name}}</div>
-            <div ng-repeat="slot in day.timeSlots" ng-class="{ 'peak-time-slot' : slot.peakTime }" class="time-slot" >
+            <div ng-repeat="slot in day.timeSlots" ng-class="{ 'peak-time-slot' : slot.peakTime }" class="time-slot day-column-slot" >
                 <div ng-if="slot.peakTime">PEAK TIME</div>
             </div>
         </div>
