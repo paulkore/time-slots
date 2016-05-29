@@ -79,10 +79,20 @@ var TimeSlotsApp = function() {
         //  Process on exit and signals.
         process.on('exit', function() { self.terminator(); });
 
-        // Removed 'SIGPIPE' from the list - bugz 852598.
-        ['SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGTRAP', 'SIGABRT',
-         'SIGBUS', 'SIGFPE', 'SIGUSR1', 'SIGSEGV', 'SIGUSR2', 'SIGTERM'
-        ].forEach(function(element, index, array) {
+        ['SIGHUP',
+        'SIGINT',
+        'SIGQUIT',
+        'SIGILL',
+        'SIGTRAP',
+        'SIGABRT',
+        'SIGBUS',
+        'SIGFPE',
+        'SIGUSR1',
+        //'SIGUSR2', // <-- was interfering with Nodemon
+        'SIGSEGV',
+        //'SIGPIPE', // <-- from sample app: bugz 852598
+        'SIGTERM'
+        ].forEach(function(element) {
             process.on(element, function() { self.terminator(element); });
         });
     };
