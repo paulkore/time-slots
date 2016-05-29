@@ -151,8 +151,8 @@ function TimeSlotsApp() {
         routes['/'] = function(req, res) {
             res.redirect("/index.html");
         };
-        routes['/hello'] = function(req, res) {
-            res.redirect('hello.html');
+        routes['/signup'] = function(req, res) {
+            res.redirect('signup.html');
         };
 
         routes['/api/ping'] = function (req, res) {
