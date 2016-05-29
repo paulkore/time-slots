@@ -104,8 +104,7 @@ var TimeSlotsApp = function() {
 
 
     /**
-     *  Initialize the server (express) and create the routes and register
-     *  the handlers.
+     *  Initialize the server (express) with various configs
      */
     self.initializeServer = function() {
         self.createRoutes();
@@ -138,7 +137,7 @@ var TimeSlotsApp = function() {
 
 
     /**
-     *  Initializes the sample application.
+     *  Initialize the application.
      */
     self.initialize = function() {
         self.setupVariables();
