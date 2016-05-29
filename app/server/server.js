@@ -38,14 +38,6 @@ function TimeSlotsApp() {
         }
     };
 
-
-    /**
-     *  Retrieve entry (content) from cache.
-     *  @param {string} key  Key identifying content to retrieve from cache.
-     */
-    self.cache_get = function(key) { return self.zcache[key]; };
-
-
     /**
      *  terminator === the termination handler
      *  Terminate server on receipt of the specified signal.
@@ -95,7 +87,6 @@ function TimeSlotsApp() {
      *  Initialize the server (express) with various configs
      */
     self.initializeServer = function() {
-        self.createRoutes();
         self.app = express();
         self.app.set('json spaces', '  ');
 
@@ -118,8 +109,9 @@ function TimeSlotsApp() {
         });
 
         //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
+        var routes = self.createRoutes();
+        for (var url in routes) {
+            self.app.get(url, routes[url]);
         }
     };
 
@@ -129,10 +121,9 @@ function TimeSlotsApp() {
      */
     self.initialize = function() {
         self.setupVariables();
-        self.populateCache();
         self.setupTerminationHandlers();
 
-        // Create the express server and routes.
+        // Create the express server and routes
         self.initializeServer();
 
         // Populate the time-slot data model
@@ -152,54 +143,32 @@ function TimeSlotsApp() {
 
 
     /**
-     *  Populate the cache.
-     *  TODO: This is not necessary, because we use the static-content serving feature
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = {
-                'index.html': '',
-                'hello.html': '',
-            };
-        }
-
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./app/client/index.html');
-        self.zcache['hello.html'] = fs.readFileSync('./app/client/hello.html');
-    };
-
-
-    /**
      *  Create the routing table entries + handlers for the application.
      */
     self.createRoutes = function() {
-        self.routes = { };
+        var routes = { };
 
-        // TODO: forward to the static resource, no need for custom cache
-        self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
+        routes['/'] = function(req, res) {
+            res.redirect("/index.html");
+        };
+        routes['/hello'] = function(req, res) {
+            res.redirect('hello.html');
         };
 
-        // TODO: forward to the static resource, no need for custom cache
-        self.routes['/hello'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('hello.html') );
+        routes['/api/ping'] = function (req, res) {
+            res.json({
+                response: 'PONG!',
+                time: moment().format("dddd, MMMM Do YYYY, h:mm:ss a"),
+            });
         };
 
-        self.routes['/api/ping'] = function (req, res) {
-          res.json({
-            response: 'PONG!',
-            time: moment().format("dddd, MMMM Do YYYY, h:mm:ss a"),
-          });
-        };
-
-        self.routes['/api/slots'] = function (req, res) {
+        routes['/api/slots'] = function (req, res) {
             svc.fetchSlots(function(rows) {
                 res.json(rows);
             });
         };
 
+        return routes;
     };
 
 }
