@@ -8,9 +8,17 @@
 </head>
 
 <body>
-<div ng-controller='SignupController'>
-    <p>The ID is {{greeting.id}}</p>
-    <p>The content is {{greeting.content}}</p>
+<div ng-controller="SignupController">
+
+    <div ng-if="errorData">
+        <h3 class="error-msg">An error occurred</h3>
+        <!--<p>{{errorData}}</p>-->
+    </div>
+    <div ng-if="!errorData">
+        <h3>Response JSON:</h3>
+        <p>{{responseData}}</p>
+    </div>
+
 </div>
 </body>
 </html>
