@@ -12,7 +12,7 @@ body {
 }
 
 .left-column {
-    width: 120px;
+    width: 180px;
 }
 
 .day-column {
@@ -34,7 +34,7 @@ body {
 }
 
 .left-column-slot {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .peak-time-slot {

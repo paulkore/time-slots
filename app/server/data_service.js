@@ -38,7 +38,7 @@ function initData() {
 		
 		slot.id = slotId;
 		slot.time = time;
-		slot.displayTime = toDisplayTime(time);
+		slot.displayTime = toDisplayTimeRange(time, time+0.5);
 
 		slotId++;
 		time += 0.5; // Time slots come in 1/2 hour increments
@@ -72,19 +72,25 @@ function initData() {
 	});
 }
 
-function toDisplayTime(time) {
+function toDisplayTimeRange(time1, time2) {
+	var displayPeriod1 = time1 < 12 && time2 >= 12; // only display both AM/PM periods on the cusp
+	var displayPeriod2 = true; // always display the period on the 2nd time
+	return toDisplayTime(time1, displayPeriod1) + " - " + toDisplayTime(time2, displayPeriod2);
+}
+
+function toDisplayTime(time, includePeriod) {
 	var hours = Math.floor(time);
 	var minutes = 60 * (time - hours);
-	var am = "AM";
+	var period = ' a.m.';
 	if (hours >= 12) {
-		am = "PM";
+		period = ' p.m.';
 		if (hours > 12) hours -= 12;
 	}
 	var hh = hours.toFixed(0);
 	var mm = minutes.toFixed(0);
-	if (mm.length < 2) mm = "0" + mm;
+	if (mm.length < 2) mm = '0' + mm;
 
-	return hh + ":" + mm + " " + am;
+	return hh + ':' + mm + (includePeriod ? period : '');
 }
 
 
