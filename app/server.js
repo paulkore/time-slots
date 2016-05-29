@@ -21,21 +21,20 @@ var TimeSlotsApp = function() {
      */
     self.setupVariables = function() {
         //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT;
+        self.host = process.env.OPENSHIFT_NODEJS_HOST;
+        self.port = process.env.OPENSHIFT_NODEJS_PORT;
 
         //  Log errors on OpenShift but continue w/ 127.0.0.1
         //  This allows us to run/test the app locally.
-        if (typeof self.ipaddress === "undefined") {
-
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
-            self.ipaddress = "127.0.0.1";
-        };
+        if (typeof self.host === "undefined") {
+            self.host = "127.0.0.1";
+            console.warn('No OPENSHIFT_NODEJS_HOST var, using ' + self.host);
+        }
         if (typeof self.port === "undefined") {
-            console.warn('No OPENSHIFT_NODEJS_PORT var, using 8081');
             self.port = 8081;
-        };
+            console.warn('No OPENSHIFT_NODEJS_PORT var, using ' + self.port);
 
+        }
     };
 
 
@@ -146,10 +145,9 @@ var TimeSlotsApp = function() {
      */
     self.start = function() {
         //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.ipaddress, function() {
-            console.log('%s: Node server started on %s:%d ...', Date(Date.now()), self.ipaddress, self.port);
+        self.app.listen(self.port, self.host, function() {
+            console.log('%s: Node server started on %s:%d ...', new Date(Date.now()), self.host, self.port);
         });
-
     };
 
 
