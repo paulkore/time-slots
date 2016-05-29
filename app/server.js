@@ -191,7 +191,7 @@ var TimeSlotsApp = function() {
 /**
  *  Main executable code
  */
-var zapp = new TimeSlotsApp();
-zapp.initialize();
-zapp.start();
+var app = new TimeSlotsApp();
+app.initialize();
+app.start();
 
