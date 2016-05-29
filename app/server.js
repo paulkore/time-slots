@@ -145,6 +145,9 @@ var TimeSlotsApp = function() {
 
         // Create the express server and routes.
         self.initializeServer();
+
+        // Populate the time-slot data model
+        svc.initData();
     };
 
 
