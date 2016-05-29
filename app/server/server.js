@@ -1,4 +1,6 @@
-#!/bin/env node
+module.exports = {
+    TimeSlotsApp: TimeSlotsApp,
+};
 
 var express = require('express');
 var fs = require('fs');
@@ -6,7 +8,7 @@ var moment = require('moment');
 var svc = require('./data_service');
 
 
-var TimeSlotsApp = function() {
+function TimeSlotsApp() {
 
     //  Scope.
     var self = this;
@@ -34,19 +36,6 @@ var TimeSlotsApp = function() {
             self.port = 8081;
             console.warn('No OPENSHIFT_NODEJS_PORT var, using ' + self.port);
         }
-    };
-
-
-    /**
-     *  Populate the cache.
-     */
-    self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
-        }
-
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./app/index.html');
     };
 
 
@@ -125,7 +114,7 @@ var TimeSlotsApp = function() {
             self.app.use(express.methodOverride());
             self.app.use(allowCrossDomain);
             // self.app.use(app.router);
-            // self.app.use(express.static(__dirname + '/public'));
+            self.app.use(express.static('./app/client'));
         });
 
         //  Add handlers for the app (from the routes).
@@ -163,14 +152,39 @@ var TimeSlotsApp = function() {
 
 
     /**
+     *  Populate the cache.
+     *  TODO: This is not necessary, because we use the static-content serving feature
+     */
+    self.populateCache = function() {
+        if (typeof self.zcache === "undefined") {
+            self.zcache = {
+                'index.html': '',
+                'hello.html': '',
+            };
+        }
+
+        //  Local cache for static content.
+        self.zcache['index.html'] = fs.readFileSync('./app/client/index.html');
+        self.zcache['hello.html'] = fs.readFileSync('./app/client/hello.html');
+    };
+
+
+    /**
      *  Create the routing table entries + handlers for the application.
      */
     self.createRoutes = function() {
         self.routes = { };
 
+        // TODO: forward to the static resource, no need for custom cache
         self.routes['/'] = function(req, res) {
             res.setHeader('Content-Type', 'text/html');
             res.send(self.cache_get('index.html') );
+        };
+
+        // TODO: forward to the static resource, no need for custom cache
+        self.routes['/hello'] = function(req, res) {
+            res.setHeader('Content-Type', 'text/html');
+            res.send(self.cache_get('hello.html') );
         };
 
         self.routes['/api/ping'] = function (req, res) {
@@ -188,13 +202,4 @@ var TimeSlotsApp = function() {
 
     };
 
-};
-
-
-/**
- *  Main executable code
- */
-var app = new TimeSlotsApp();
-app.initialize();
-app.start();
-
+}
