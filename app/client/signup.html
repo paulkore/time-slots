@@ -33,8 +33,10 @@
         </div><!-- hack to remove gaps between inline blocks
      --><div ng-repeat="day in days" class="column day-column">
             <div class="column-header">{{day.name}}</div>
-            <div ng-repeat="slot in day.timeSlots" ng-class="{ 'peak-time-slot' : slot.peakTime }" class="time-slot day-column-slot" >
-                <div ng-if="slot.peakTime">PEAK TIME</div>
+            <div ng-repeat="slot in day.timeSlots" class="time-slot day-column-slot" ng-click="signup()">
+                <div ng-if="slot.peakTime" class="peak-time-slot">PEAK TIME</div>
+                <div ng-if="!slot.peakTime && slot.chargeTime" class="charge-time-slot">CHARGING</div>
+                <div ng-if="!slot.peakTime && !slot.chargeTime && slot.memberName" class="occupied-time-slot">{{slot.memberName}}</div>
             </div>
         </div>
 

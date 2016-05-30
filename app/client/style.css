@@ -62,3 +62,11 @@ body {
 .peak-time-slot {
     background: lightpink;
 }
+
+.charging-time-slot {
+    background: lightgreen;
+}
+
+.occupied-time-slot {
+    background: lightgreen;
+}
