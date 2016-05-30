@@ -1,14 +1,13 @@
 module.exports = {
 	initData: initData,
 	fetchSlots: fetchSlots,
+	signup: signup,
 };
 
 // TODO: using in-memory data for now. All signup information is lost upon application restart.
 var allData = null;
 
-function fetchSlots(callback) {
-	callback(allData);
-}
+// TODO: add protection against overwriting, if two users submit a signup request at the same time (use "version id").
 
 var TimeSlot = function() {
 	var self = this;
@@ -20,6 +19,15 @@ var TimeSlot = function() {
 	self.peakTime = null; // boolean: true if this time slot is during "peak" hours
 	self.chargeTime = null; // boolean: true if this time slot is required for charging the machine after it was in use
 	self.memberName = null; // string: the name of the person subscribed
+
+	self.isAvailableForUse = function() {
+		return !self.peakTime && !self.chargeTime && !self.memberName;
+	};
+
+	self.isAvailableForCharging = function() {
+		// charging allowed during peak time
+		return !self.chargeTime && !self.memberName;
+	};
 };
 
 function initData() {
@@ -93,4 +101,89 @@ function toDisplayTime(time, includePeriod) {
 	return hh + ':' + mm + (includePeriod ? period : '');
 }
 
+/** Returns all the available data */
+function fetchSlots(callback) {
+	callback(allData);
+}
 
+/** Attempts to sign up a member for a particular number of slots **/
+function signup(dayIndex, slotIndex, memberName, duration) {
+	//console.log("Signup called with: " + dayIndex + ", " + slotIndex + ", " + memberName + ", " + duration);
+
+	var invalidInput = false;
+	if (dayIndex < 0 || dayIndex >= allData.days.length) invalidInput = true;
+	if (slotIndex < 0 || slotIndex >= allData.slots.length) invalidInput = true;
+	if (!memberName || !memberName.trim()) invalidInput = true;
+	if (duration != "1" && duration != "1/2") invalidInput = true;
+	if (invalidInput) {
+		// console.log("Signup failed due to invalid input");
+		return {
+			success: false,
+			userMessage: null, // this error is not the user's fault (system error)
+		}
+	}
+
+	var day = allData.days[dayIndex];
+	var slots = day.timeSlots;
+
+	var numSlotsToUse = duration === "1/2" ? 1 : 2;
+	var numSlotsToCharge = duration === "1/2" ? 2 : 4;
+
+	var errorMessage = null;
+
+	var slotsToUse = [];
+	var useStartIndex = slotIndex;
+	var useEndIndex = slotIndex + numSlotsToUse - 1;
+	for (var i=useStartIndex; i<=useEndIndex; i++) {
+		if (i >= slots.length) {
+			errorMessage = "Not enough time for " + duration + " hour(s), please pick another slot";
+			break;
+		}
+		var slotToUse = slots[i];
+		if (!slotToUse.isAvailableForUse()) {
+			errorMessage = "Slot not available for use, please try another slot";
+			break;
+		}
+		slotsToUse.push(slotToUse);
+	}
+
+	var slotsToCharge = [];
+	if (!errorMessage) {
+		var chargeStartIndex = useEndIndex + 1;
+		var chargeEndIndex = chargeStartIndex + numSlotsToCharge - 1;
+		for (var j = chargeStartIndex; j <= chargeEndIndex; j++) {
+			if (j >= slots.length) {
+				// this is fine; machine will be charging past closing hours
+				break;
+			}
+			var slotToCharge = slots[j];
+			if (!slotToCharge.isAvailableForCharging()) {
+				errorMessage = "Not enough time available for charging";
+				break;
+			}
+			slotsToCharge.push(slotToCharge);
+		}
+	}
+
+	if (errorMessage) {
+		// console.log("Signup failed due to a slot conflict");
+		return {
+			success: false,
+			userMessage: errorMessage,
+		}
+	}
+
+	// finally, mark the slots accordingly
+	slotsToUse.forEach(function(slot) {
+		slot.memberName = memberName;
+	});
+	slotsToCharge.forEach(function(slot) {
+		slot.chargeTime = true;
+	});
+
+	// console.log("Signup successful");
+	return {
+		success: true,
+		userMessage: null,
+	};
+}

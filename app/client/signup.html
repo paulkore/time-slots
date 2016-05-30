@@ -12,19 +12,26 @@
 <div ng-controller="SignupController" class="main-wrapper">
 
     <h1 class="page-title">Victoria Park Tennis Club - ball machine sign up</h1>
-    <p class="page-info">
-        To sign up, click on one of the available time slots and enter your name.<br/>
-        Note that for every hour of use, the machine needs to be charged for 2 hours (this will be reflected in the sheet).
-    </p>
 
-    <div ng-if="errorData">
-        <h3 class="error-msg">An error occurred</h3>
-        <!--<p>{{errorData}}</p>-->
+    <div class="page-info1">
+        To sign up, please follow the instructions below.<br/>
+        Note that after an hour of operation the machine will need to charge for 2 hours, and after a half-hour session it will need to charge for 1 hour.
     </div>
-    <div ng-if="!errorData">
-        <!--<h3>Response JSON:</h3>-->
-        <!--<p>{{responseData}}</p>-->
 
+    <div class="page-info2">
+        <label>1. Enter your name here: <input class="name-input" type="text" ng-model="memberName"/></label>
+        <label>2. Choose the desired duration:
+            <input class="duration-input" type="radio" ng-model="duration" value="1"/> 1 hour
+            <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
+        </label>
+        <label>3. Click on an open time slot</label><br/>
+    </div>
+
+    <div class="message error-message" ng-if="restErrorData && errorMessage">{{errorMessage}}</div>
+    <div class="message error-message" ng-if="restErrorData && !errorMessage">A system error occurred - please try again, or let us know if the issue persists</div>
+    <div class="message user-message" ng-if="message">{{message}}</div>
+
+    <div>
         <div class="column left-column">
             <div class="column-header"></div>
             <div ng-repeat="slot in slots" class="time-slot left-column-slot">
@@ -33,13 +40,13 @@
         </div><!-- hack to remove gaps between inline blocks
      --><div ng-repeat="day in days" class="column day-column">
             <div class="column-header">{{day.name}}</div>
-            <div ng-repeat="slot in day.timeSlots" class="time-slot day-column-slot" ng-click="signup()">
-                <div ng-if="slot.peakTime" class="peak-time-slot">PEAK TIME</div>
-                <div ng-if="!slot.peakTime && slot.chargeTime" class="charge-time-slot">CHARGING</div>
+            <div ng-repeat="slot in day.timeSlots" class="time-slot day-column-slot" ng-class="{'selectable-slot': slot.isAvailableForUse() && memberName}" ng-click="signup(day.id, slot.id)">
+                <div ng-if="slot.peakTime" class="peak-time-slot">- peak time -</div>
+                <div ng-if="!slot.peakTime && slot.chargeTime" class="charging-time-slot">- charging -</div>
                 <div ng-if="!slot.peakTime && !slot.chargeTime && slot.memberName" class="occupied-time-slot">{{slot.memberName}}</div>
             </div>
+            <div class="column-header">{{day.name}}</div>
         </div>
-
     </div>
 
 </div>
