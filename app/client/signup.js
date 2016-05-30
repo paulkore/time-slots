@@ -45,7 +45,29 @@ app.controller("SignupController", function($scope, $http) {
             },
             function (res) { // error
                 restError(res);
-            })
+            });
+    };
+
+    $scope.clear = function() {
+        if (isEmpty($scope.memberName)) {
+            // No name entered
+            return;
+        }
+
+        var requestData = {
+            memberName: $scope.memberName.trim(),
+        };
+
+        $http.post('/api/clear', requestData).then(
+            function (res) { // success
+                restSuccess(res);
+                processSlotData(res);
+                $scope.message = "Successfully cleared bookings.";
+            },
+            function (res) { // error
+                restError(res);
+            });
+
     };
 
     function restSuccess(res) {

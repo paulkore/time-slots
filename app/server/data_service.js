@@ -2,6 +2,7 @@ module.exports = {
 	initData: initData,
 	fetchSlots: fetchSlots,
 	signup: signup,
+	clear: clear,
 };
 
 // TODO: using in-memory data for now. All signup information is lost upon application restart.
@@ -19,6 +20,11 @@ var TimeSlot = function() {
 	self.peakTime = null; // boolean: true if this time slot is during "peak" hours
 	self.chargeTime = null; // boolean: true if this time slot is required for charging the machine after it was in use
 	self.memberName = null; // string: the name of the person subscribed
+
+	self.clear = function() {
+		self.chargeTime = null;
+		self.memberName = null;
+	};
 
 	self.isAvailableForUse = function() {
 		return !self.peakTime && !self.chargeTime && !self.memberName;
@@ -176,12 +182,43 @@ function signup(dayIndex, slotIndex, memberName, duration) {
 	// finally, mark the slots accordingly
 	slotsToUse.forEach(function(slot) {
 		slot.memberName = memberName;
+		slot.chargeTime = false;
 	});
 	slotsToCharge.forEach(function(slot) {
+		slot.memberName = memberName;
 		slot.chargeTime = true;
 	});
 
 	// console.log("Signup successful");
+	return {
+		success: true,
+		userMessage: null,
+	};
+}
+
+/** Attempts to clear all bookings by a certain member **/
+function clear(memberName) {
+	//console.log("Clear called with: " + memberName);
+
+	var invalidInput = false;
+	if (!memberName || !memberName.trim()) invalidInput = true;
+	if (invalidInput) {
+		// console.log("Clear failed due to invalid input");
+		return {
+			success: false,
+			userMessage: null, // this error is not the user's fault (system error)
+		}
+	}
+
+	allData.days.forEach(function(day) {
+		day.timeSlots.forEach(function(slot) {
+			if (slot.memberName === memberName) {
+				slot.clear();
+			}
+		});
+	});
+
+	// console.log("Clear successful");
 	return {
 		success: true,
 		userMessage: null,

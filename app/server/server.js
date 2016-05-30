@@ -198,6 +198,7 @@ function TimeSlotsApp() {
                 if (result.userMessage) {
                     // if user message was provided, this is due to a bad selection by the user
                     res.status(409).send({message: result.userMessage});
+                    return;
                 }
                 else {
                     // if there's no message, this is a system error
@@ -207,6 +208,43 @@ function TimeSlotsApp() {
             }
 
             // signup was successful, re-fetch the slot data
+            svc.fetchSlots(function(data) {
+                res.json(data);
+            });
+        });
+
+        self.app.post('/api/clear', function (req, res) {
+            var body = req.body;
+
+            var errors = [];
+            var memberName = trim(body.memberName);
+            if (!memberName) {
+                errors.push("Invalid or missing request argument: memberName");
+            }
+
+            // console.log("REST arguments: " + memberName);
+            if (errors.length > 0) {
+                // bad request
+                res.status(400).send(errors);
+                return;
+            }
+
+            var result = svc.clear(memberName);
+            if (!result.success) {
+                // sign-up failed
+                if (result.userMessage) {
+                    // if user message was provided, this is due to a bad selection by the user
+                    res.status(409).send({message: result.userMessage});
+                    return;
+                }
+                else {
+                    // if there's no message, this is a system error
+                    res.status(500).send({message: null});
+                    return;
+                }
+            }
+
+            // clear was successful, re-fetch the slot data
             svc.fetchSlots(function(data) {
                 res.json(data);
             });

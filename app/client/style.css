@@ -67,7 +67,11 @@ body {
     margin-left: 20px;
 }
 
-
+.clear-input {
+    margin-left: 10px;
+    width: 100px;
+    font-size: 25px;
+}
 
 .column {
     display: inline-block;
