@@ -1,2 +1,2 @@
 # time-slots
-A simple Node.js application for time-slot management
+A simple Node+Angular application for time-slot management
