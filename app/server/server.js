@@ -19,26 +19,6 @@ function TimeSlotsApp() {
     /*  ================================================================  */
 
     /**
-     *  Set up server IP address and port # using env variables/defaults.
-     */
-    self.setupVariables = function() {
-        //  Set the environment variables we need.
-        self.host = process.env.OPENSHIFT_NODEJS_HOST;
-        self.port = process.env.OPENSHIFT_NODEJS_PORT;
-
-        //  Log errors on OpenShift but continue w/ 127.0.0.1
-        //  This allows us to run/test the app locally.
-        if (typeof self.host === "undefined") {
-            self.host = "127.0.0.1";
-            console.warn('No OPENSHIFT_NODEJS_HOST var, using ' + self.host);
-        }
-        if (typeof self.port === "undefined") {
-            self.port = 8081;
-            console.warn('No OPENSHIFT_NODEJS_PORT var, using ' + self.port);
-        }
-    };
-
-    /**
      *  terminator === the termination handler
      *  Terminate server on receipt of the specified signal.
      *  @param {string} sig  Signal to terminate on.
@@ -88,6 +68,13 @@ function TimeSlotsApp() {
      */
     self.initializeServer = function() {
         self.app = express();
+
+        self.port = process.env.PORT;
+        if (!self.port) {
+            self.port = 8081;
+            console.warn('PORT environment variable not set, using default: ' + self.port);
+        }
+
         self.app.set('json spaces', '  ');
 
         //CORS middleware
@@ -116,7 +103,6 @@ function TimeSlotsApp() {
      *  Initialize the application.
      */
     self.initialize = function() {
-        self.setupVariables();
         self.setupTerminationHandlers();
 
         // Create the express server and routes
@@ -131,9 +117,8 @@ function TimeSlotsApp() {
      *  Start the server (starts up the sample application).
      */
     self.start = function() {
-        //  Start the app on the specific interface (and port).
-        self.app.listen(self.port, self.host, function() {
-            console.log('%s: Node server started on %s:%d ...', new Date(Date.now()), self.host, self.port);
+        self.app.listen(self.port, function() {
+            console.log('%s: Node server started on %s ...', new Date(Date.now()), self.port);
         });
     };
 
