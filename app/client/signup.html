@@ -30,7 +30,7 @@
 
     <div class="message error-message" ng-if="errorMessage">{{errorMessage}}</div>
     <div class="message error-message" ng-if="restErrorData && !errorMessage">A system error occurred - please try again, or let us know if the issue persists</div>
-    <div class="message user-message" ng-if="message">{{message}}</div>
+    <div class="message user-message" ng-if="!restErrorData && !errorMessage && message">{{message}}</div>
 
     <div>
         <div class="column left-column">
