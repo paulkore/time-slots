@@ -26,14 +26,19 @@ app.controller("SignupController", function($scope, $http) {
 
     $scope.signup = function(dayIndex, slotIndex) {
         if (isEmpty($scope.memberName)) {
-            // No name entered
+            $scope.errorMessage = "Please enter your name";
+            return;
+        }
+        var memberName = $scope.memberName.trim();
+        if (memberName.length > 12) {
+            $scope.errorMessage = "Name can't be longer than 12 letters";
             return;
         }
 
         var requestData = {
             dayIndex: dayIndex,
             slotIndex: slotIndex,
-            memberName: $scope.memberName.trim(),
+            memberName: memberName,
             duration: $scope.duration,
         };
 
@@ -53,9 +58,14 @@ app.controller("SignupController", function($scope, $http) {
             // No name entered
             return;
         }
+        var memberName = $scope.memberName.trim();
+        if (memberName.length > 12) {
+            $scope.errorMessage = "Name can't be longer than 12 letters";
+            return;
+        }
 
         var requestData = {
-            memberName: $scope.memberName.trim(),
+            memberName: memberName,
         };
 
         $http.post('/api/clear', requestData).then(
