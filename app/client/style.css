@@ -9,7 +9,11 @@ body {
 
 .page-title {
     color: darkblue;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
+}
+
+.page-info {
+    margin-bottom: 30px;
 }
 
 .error-msg {
