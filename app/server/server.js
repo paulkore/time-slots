@@ -129,7 +129,7 @@ function TimeSlotsApp() {
     self.createRoutes = function() {
 
         self.app.get('/', function(req, res) {
-            res.redirect("/index.html");
+            res.redirect('index.html');
         });
 
         self.app.get('/signup', function(req, res) {
