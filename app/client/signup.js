@@ -72,7 +72,7 @@ app.controller("SignupController", function($scope, $http) {
             function (res) { // success
                 restSuccess(res);
                 processSlotData(res);
-                $scope.message = "Successfully cleared bookings.";
+                $scope.message = "Successfully cleared bookings belonging to " + memberName + ".";
             },
             function (res) { // error
                 restError(res);

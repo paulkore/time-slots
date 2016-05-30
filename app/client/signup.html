@@ -25,7 +25,7 @@
             <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
         </label>
         <label>3. Click on an open time slot</label>
-        <label>4. To clear, enter your name and click: <input class="clear-input" type="button" value="clear all" ng-click="clear()"/></label>
+        <label>4. To clear, enter your name and click: <input class="clear-input" type="button" value="clear my bookings" ng-click="clear()" ng-disabled="!memberName"/></label>
     </div>
 
     <div class="message error-message" ng-if="errorMessage">{{errorMessage}}</div>
