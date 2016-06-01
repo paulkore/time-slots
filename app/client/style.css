@@ -9,11 +9,11 @@ body {
     z-index: 9999;
     width: 100%;
     background-color: #FFFFFF;
-    height: 300px;
+    height: 255px;
 }
 
 .header-padding {
-    height: 300px;
+    height: 255px;
 }
 
 .footer-padding {
@@ -36,11 +36,16 @@ body {
 }
 
 .page-info2 {
-    padding-left: 30px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     display: inline-block;
     vertical-align: top;
-    width: 460px;
+}
+
+.page-info-block {
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 25px;
+    margin-right: 25px;
 }
 
 .page-info2 label {
@@ -49,27 +54,6 @@ body {
     line-height: 20px;
     font-size: 18px;
     margin-bottom: 10px;
-}
-
-.message {
-    display: inline-block;
-    vertical-align: top;
-    margin-left: 25px;
-    padding: 20px 20px;
-    font-weight: bold;
-    font-size: 18px;
-    width: 550px;
-    text-align: center;
-}
-
-.error-message {
-    color: red;
-    border: solid 1px red;
-}
-
-.user-message {
-    color: forestgreen;
-    border: solid 1px forestgreen;
 }
 
 .name-input {
@@ -88,6 +72,33 @@ body {
     margin-left: 10px;
     width: 140px;
     font-size: 25px;
+}
+
+.message-container {
+    height: 27px;
+}
+
+.message {
+    margin-left: 230px;
+    font-weight: bold;
+    font-size: 18px;
+    line-height: 27px;
+    width: 850px;
+    text-align: center;
+
+    animation: blinker 0.3s cubic-bezier(.5, 0, 1, 1) 2 alternate;
+}
+
+@keyframes blinker { to { opacity: 0; } }
+
+.error-message {
+    color: brown;
+    background: lightpink;
+}
+
+.user-message {
+    color: darkgreen;
+    background: lightgreen;
 }
 
 .column {

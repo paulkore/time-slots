@@ -26,7 +26,7 @@ app.controller("SignupController", function($scope, $http) {
 
     $scope.signup = function(dayIndex, slotIndex) {
         if (isEmpty($scope.memberName)) {
-            $scope.errorMessage = "Please enter your name";
+            $scope.errorMessage = "Please enter your name to sign up";
             return;
         }
         var memberName = $scope.memberName.trim();

@@ -126,7 +126,7 @@ function clear(memberName, successCallback, errorCallback) {
 	//console.log("Clear called with: " + memberName);
 	var found = data.clearForMember(memberName);
 	if (found && successCallback) successCallback();
-	if (!found && errorCallback) errorCallback("There were no bookings under this member's name");
+	if (!found && errorCallback) errorCallback("There are no bookings under this member's name");
 }
 
 /**
