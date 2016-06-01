@@ -12,14 +12,44 @@ var data = require('./data');
  */
 function getSheetData() {
 	var slotDefs = data.getSlotDefs();
-	var days = data.getDays();
+	var daysData = data.getDays();
 
-	// add some additional fields to the returned data
-	days.forEach(function(day) {
-		day.slots.forEach(function(slot) {
-			slot.isAvailableForUse = isAvailableForUse(slot);
-			slot.isAvailableForCharging = isAvailableForCharging(slot);
+	var days = [];
+	daysData.forEach(function(dayData) {
+		var day = {
+			id: dayData.id,
+			name: dayData.name,
+			slots: [],
+		};
+		days.push(day);
+
+		// combine adjacent identical slots for better presentation
+		var currentSlot = null;
+		function pushCurrentSlot() {
+			if (currentSlot) {
+				currentSlot.heightClass = 'slot-height-'+currentSlot.height;
+				day.slots.push(currentSlot);
+				currentSlot = null;
+			}
+		}
+
+		dayData.slots.forEach(function(slot) {
+			if (slotsCanBeGrouped(currentSlot, slot)) {
+				currentSlot.height += 1;
+			}
+			else {
+				pushCurrentSlot();
+
+				// start a new slot
+				currentSlot = slot;
+				currentSlot.isAvailableForUse = isAvailableForUse(slot);
+				currentSlot.isAvailableForCharging = isAvailableForCharging(slot);
+				currentSlot.height = 1; // for grouping purposes
+			}
 		});
+
+		// push the last slot, if it exists
+		pushCurrentSlot();
 	});
 
 	return {
@@ -114,4 +144,35 @@ function isAvailableForUse(slot) {
 function isAvailableForCharging(slot) {
 	return !slot.memberName && !slot.chargeTime; // charging can happen during peak time
 }
+
+/**
+ * (Helper function)
+ * returns true if the given slots can be "grouped" into one slot for presentation purposes
+ */
+function slotsCanBeGrouped(slot1, slot2) {
+	if (slot1 == null || slot2 == null) {
+		// not applicable
+		return false;
+	}
+
+	if (slot1.peakTime && slot2.peakTime) {
+		// peak time trumps any other state
+		return true;
+	}
+
+	function isBooked(slot) {return slot.memberName && !slot.chargeTime};
+	function isCharging(slot) {return slot.memberName && slot.chargeTime};
+
+	if (slot1.memberName === slot2.memberName) {
+		if (isBooked(slot1) && isBooked(slot2)) {
+			return true;
+		}
+		if (isCharging(slot1) && isCharging(slot2)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 

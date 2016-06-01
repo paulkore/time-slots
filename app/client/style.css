@@ -98,19 +98,80 @@ body {
 }
 
 .time-slot {
+    box-sizing: border-box;
     border: solid 1px #333333;
-    height: 35px;
-    line-height: 35px;
     text-align: center;
+    font-size: 18px;
 }
+
+.slot-height-1 {
+    height: 30px;
+    line-height: 30px;
+}
+
+.slot-height-2 {
+    height: 60px;
+    line-height: 60px;
+}
+
+.slot-height-3 {
+    height: 90px;
+    line-height: 90px;
+}
+
+.slot-height-4 {
+    height: 120px;
+    line-height: 120px;
+}
+
+.slot-height-5 {
+    height: 150px;
+    line-height: 150px;
+}
+
+.slot-height-6 {
+    height: 180px;
+    line-height: 180px;
+}
+
+.slot-height-7 {
+    height: 210px;
+    line-height: 210px;
+}
+
+.slot-height-8 {
+    height: 240px;
+    line-height: 240px;
+}
+
+.slot-height-9 {
+    height: 270px;
+    line-height: 270px;
+}
+
+.slot-height-10 {
+    height: 300px;
+    line-height: 300px;
+}
+
+.slot-height-11 {
+    height: 330px;
+    line-height: 330px;
+}
+
+.slot-height-12 {
+    height: 360px;
+    line-height: 360px;
+}
+
 
 .left-column-slot {
     color: darkblue;
-    font-size: 18px;
+
 }
 
 .day-column-slot {
-    font-size: 18px;
+
 }
 
 .day-column-slot.selectable-slot:hover {
