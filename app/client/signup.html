@@ -8,51 +8,58 @@
     <link rel="stylesheet" type="text/css" href="style.css"/>
 </head>
 
-<body>
-<div ng-controller="SignupController" class="main-wrapper">
-
-    <h1 class="page-title">Victoria Park Tennis Club - ball machine sign up</h1>
-
-    <div class="page-info1">
-        To sign up, please follow the instructions below.<br/>
-        Note that after an hour of operation the machine will need to charge for 2 hours, and after a half-hour session it will need to charge for 1 hour.
-    </div>
-
-    <div class="page-info2">
-        <label>1. Enter your name here: <input class="name-input" type="text" ng-model="memberName" maxlength="12"/></label>
-        <label>2. Choose the desired duration:
-            <input class="duration-input" type="radio" ng-model="duration" value="1"/> 1 hour
-            <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
-        </label>
-        <label>3. Click on an open time slot</label>
-        <label>4. To clear, enter your name and click: <input class="clear-input" type="button" value="clear my bookings" ng-click="clear()" ng-disabled="!memberName"/></label>
-    </div>
-
-    <div class="message error-message" ng-if="errorMessage">{{errorMessage}}</div>
-    <div class="message error-message" ng-if="restErrorData && !errorMessage">A system error occurred - please try again, or let us know if the issue persists</div>
-    <div class="message user-message" ng-if="!restErrorData && !errorMessage && message">{{message}}</div>
-
-    <div>
-        <div class="column left-column">
-            <div class="column-header"></div>
-            <div ng-repeat="slot in slotDefs" class="time-slot left-column-slot slot-height-1">
-                {{slot.displayTime}}
+<body ng-controller="SignupController">
+<div class="fixed-header">
+    <div class="centering-wrapper sheet-wrapper">
+        <h1 class="page-title">Victoria Park Tennis Club - ball machine sign up</h1>
+        <div class="page-info1">
+            To sign up, please follow the instructions below.<br/>
+            Note that after an hour of operation the machine will need to charge for 2 hours, and after a half-hour session it will need to charge for 1 hour.
+        </div>
+        <div class="page-info2">
+            <label>1. Enter your name in this box: <input class="name-input" type="text" ng-model="memberName" maxlength="12"/></label>
+            <label>2. Choose the desired duration:
+                <input class="duration-input" type="radio" ng-model="duration" value="1"/> 1 hour
+                <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
+            </label>
+            <label>3. Click on an open time slot</label>
+            <label>4. To clear, enter your name and click: <input class="clear-input" type="button" value="clear my bookings" ng-click="clear()" ng-disabled="!memberName"/></label>
+        </div>
+        <div class="message error-message" ng-if="errorMessage">{{errorMessage}}</div>
+        <div class="message error-message" ng-if="restErrorData && !errorMessage">A system error occurred - please try again, or let us know if the issue persists</div>
+        <div class="message user-message" ng-if="!restErrorData && !errorMessage && message">{{message}}</div>
+        <div class="table-header">
+            <div class="column left-column">
+                <div class="column-header"></div>
+            </div><!-- hack to remove gaps between inline blocks
+         --><div ng-repeat="day in days" class="column day-column">
+                <div class="column-header">{{day.name}}</div>
             </div>
-        </div><!-- hack to remove gaps between inline blocks
-     --><div ng-repeat="day in days" class="column day-column">
-            <div class="column-header">{{day.name}}</div>
-            <div ng-repeat="slot in day.slots"
-                 class="time-slot day-column-slot" ng-class="{'selectable-slot': slot.isAvailableForUse, '{{slot.heightClass}}': true}"
-                 ng-click="slot.isAvailableForUse && signup(day.id, slot.id)">
-
-                <div ng-if="slot.peakTime" class="peak-time-slot">- peak time -</div>
-                <div ng-if="!slot.peakTime && slot.chargeTime" class="charging-time-slot">- charging -</div>
-                <div ng-if="!slot.peakTime && !slot.chargeTime && slot.memberName" class="occupied-time-slot">{{slot.memberName}}</div>
-            </div>
-            <div class="column-header">{{day.name}}</div>
         </div>
     </div>
+</div>
 
+<div class="centering-wrapper">
+    <div class="header-padding"></div>
+
+    <div class="column left-column">
+        <div ng-repeat="slot in slotDefs" class="time-slot left-column-slot slot-height-1">
+            {{slot.displayTime}}
+        </div>
+    </div><!-- hack to remove gaps between inline blocks
+ --><div ng-repeat="day in days" class="column day-column">
+        <div ng-repeat="slot in day.slots"
+             class="time-slot day-column-slot" ng-class="{'selectable-slot': slot.isAvailableForUse, '{{slot.heightClass}}': true}"
+             ng-click="slot.isAvailableForUse && signup(day.id, slot.id)">
+
+            <div ng-if="slot.peakTime" class="peak-time-slot">- peak time -</div>
+            <div ng-if="!slot.peakTime && slot.chargeTime" class="charging-time-slot">- charging -</div>
+            <div ng-if="!slot.peakTime && !slot.chargeTime && slot.memberName" class="occupied-time-slot">{{slot.memberName}}</div>
+        </div>
+        <div class="column-header">{{day.name}}</div>
+    </div>
+
+    <div class="footer-padding"></div>
 </div>
 </body>
 </html>
