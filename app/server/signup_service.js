@@ -156,8 +156,11 @@ function slotsCanBeGrouped(slot1, slot2) {
 	}
 
 	if (slot1.peakTime && slot2.peakTime) {
-		// peak time trumps any other state
 		return true;
+	}
+	if (slot1.peakTime === true ^ slot2.peakTime === true) {
+		// a change in peak time status trumps all "groupable" states
+		return false;
 	}
 
 	function isBooked(slot) {return slot.memberName && !slot.chargeTime};
