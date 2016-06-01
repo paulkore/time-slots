@@ -35,13 +35,13 @@
     <div>
         <div class="column left-column">
             <div class="column-header"></div>
-            <div ng-repeat="slot in slots" class="time-slot left-column-slot">
+            <div ng-repeat="slot in slotDefs" class="time-slot left-column-slot">
                 {{slot.displayTime}}
             </div>
         </div><!-- hack to remove gaps between inline blocks
      --><div ng-repeat="day in days" class="column day-column">
             <div class="column-header">{{day.name}}</div>
-            <div ng-repeat="slot in day.timeSlots" class="time-slot day-column-slot" ng-class="{'selectable-slot': !slot.memberName && !slot.peakTime && !slot.chargeTime}" ng-click="signup(day.id, slot.id)">
+            <div ng-repeat="slot in day.slots" class="time-slot day-column-slot" ng-class="{'selectable-slot': slot.isAvailableForUse}" ng-click="slot.isAvailableForUse && signup(day.id, slot.id)">
                 <div ng-if="slot.peakTime" class="peak-time-slot">- peak time -</div>
                 <div ng-if="!slot.peakTime && slot.chargeTime" class="charging-time-slot">- charging -</div>
                 <div ng-if="!slot.peakTime && !slot.chargeTime && slot.memberName" class="occupied-time-slot">{{slot.memberName}}</div>

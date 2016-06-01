@@ -7,13 +7,13 @@ app.controller("SignupController", function($scope, $http) {
     $scope.message = null;
     $scope.errorMessage = null;
 
-    $scope.slots = [];
+    $scope.slotDefs = [];
     $scope.days = [];
     $scope.memberName = null;
     $scope.duration = "1";
 
     $scope.loadData = function() {
-        $http.get('/api/slots').then(
+        $http.get('/api/sheet').then(
             function(res) { // success
                 restSuccess(res);
                 processSlotData(res);
@@ -96,7 +96,7 @@ app.controller("SignupController", function($scope, $http) {
 
     function processSlotData(responseData) {
         var responseBody = responseData.data;
-        $scope.slots = responseBody.slots;
+        $scope.slotDefs = responseBody.slotDefs;
         $scope.days = responseBody.days;
         $scope.memberName = null;
     }
