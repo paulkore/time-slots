@@ -80,6 +80,11 @@ app.controller("SignupController", function($scope, $http) {
 
     };
 
+    $scope.dismissMessages = function() {
+        $scope.errorMessage = null;
+        $scope.message = null;
+    };
+
     function restSuccess(res) {
         $scope.restSuccessData = res;
         $scope.restErrorData = null;
@@ -91,7 +96,8 @@ app.controller("SignupController", function($scope, $http) {
         $scope.restSuccessData = null;
         $scope.restErrorData = res;
         $scope.message = null;
-        $scope.errorMessage = res.data ? res.data.message : null;
+        $scope.errorMessage = res.data && res.data.message ? res.data.message :
+            "A system error occurred - please try again, or let us know if the issue persists";
     }
 
     function processSlotData(responseData) {

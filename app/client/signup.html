@@ -32,9 +32,11 @@
         <div class="message-container">
             <!--<div class="message error-message">All your base are belong to us!</div>-->
             <!--<div class="message user-message">There are 2 popes per sq. km. in the Vatican</div>-->
-            <div class="message error-message" ng-if="errorMessage">{{errorMessage}}</div>
-            <div class="message error-message" ng-if="restErrorData && !errorMessage">A system error occurred - please try again, or let us know if the issue persists</div>
-            <div class="message user-message" ng-if="!restErrorData && !errorMessage && message">{{message}}</div>
+            <div class="message" ng-if="errorMessage || message" ng-class="{'error-message': errorMessage, 'user-message': !errorMessage && message}">
+                <div ng-if="errorMessage">{{errorMessage}}</div>
+                <div ng-if="!errorMessage && message">{{message}}</div>
+                <div class="btn dismiss-message-btn" ng-click="dismissMessages()">&#215;</div>
+            </div>
         </div>
         <div class="table-header">
             <div class="column left-column">

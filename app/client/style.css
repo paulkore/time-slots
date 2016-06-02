@@ -79,6 +79,8 @@ body {
 }
 
 .message {
+    position: relative;
+
     margin-left: 230px;
     font-weight: bold;
     font-size: 18px;
@@ -99,6 +101,37 @@ body {
 .user-message {
     color: darkgreen;
     background: lightgreen;
+}
+
+.dismiss-message-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+}
+
+.btn {
+    color: #222222;
+    background: #CCCCCC;
+    border: 1px solid #222222;
+    cursor: pointer;
+
+    /* disallow text selection inside the button */
+    user-select: none; /* new standard - not supported at the time of this writing */
+    -webkit-user-select: none; /* Chrome/Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+}
+
+.btn:hover {
+    background: #EEEEEE;
+}
+
+.btn:active {
+    background: #AAAAAA;
 }
 
 .column {
