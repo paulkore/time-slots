@@ -115,6 +115,7 @@ function createSlotDefs() {
     }
 }
 
+/** Creates all day records (will contain time slots) */
 function createDays() {
     var daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -129,7 +130,7 @@ function createDays() {
     });
 }
 
-/** Creates all day records time slot records in every day of the week */
+/** Creates all time slot records in every day of the week */
 function createTimeSlots() {
     days.forEach(function(day, dayIdx) {
         slotDefs.forEach(function(slotDef, slotIdx) {
@@ -147,12 +148,36 @@ function createTimeSlots() {
     });
 }
 
+/** Retrieves a slot at the given coordinates. Live data - for internal use only! */
+function getSlotInternal(dayIdx, slotIdx) {
+    if (dayIdx < 0 || dayIdx >= days.length) return null;
+    var slots = days[dayIdx].slots;
+    if (slotIdx < 0 || slotIdx >= slots.length) return null;
+    return slots[slotIdx];
+}
+
+
+//=============================================================
+//      Public interface stars here
+//
+
+
+/**
+ * Initializes the data model, if it doesn't exist yet.
+ * This typically happens when the application runs for the first time.
+ */
 function initData() {
     createSlotDefs();
     createDays();
     createTimeSlots();
 }
 
+/**
+ * Retrieves the time-slot definitions.
+ * These define the separate time-slots that will be created to fill up a "day" in the sheet.
+ *
+ * @returns {Array}
+ */
 function getSlotDefs() {
     var copy = []; slotDefs.forEach(function(slotDef) {
        copy.push(slotDef.copy());
@@ -160,18 +185,16 @@ function getSlotDefs() {
     return copy;
 }
 
+/**
+ * Retrieves all the available slots, grouped by their day.
+ *
+ * @returns {Array}
+ */
 function getDays() {
     var copy = []; days.forEach(function(day) {
         copy.push(day.copy());
     });
     return copy;
-}
-
-function getSlotInternal(dayIdx, slotIdx) {
-    if (dayIdx < 0 || dayIdx >= days.length) return null;
-    var slots = days[dayIdx].slots;
-    if (slotIdx < 0 || slotIdx >= slots.length) return null;
-    return slots[slotIdx];
 }
 
 /**
