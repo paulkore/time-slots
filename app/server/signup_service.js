@@ -12,7 +12,7 @@ var data = require('./data');
  */
 function getSheetData() {
 	var slotDefs = data.getSlotDefs();
-	var daysData = data.getDays();
+	var daysData = data.getSlotsByDay();
 
 	var days = [];
 	daysData.forEach(function(dayData) {

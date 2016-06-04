@@ -1,7 +1,7 @@
 module.exports = {
     initData: initData,
     getSlotDefs: getSlotDefs,
-    getDays: getDays,
+    getSlotsByDay: getSlotsByDay,
     getSlot: getSlot,
     getSlotSequence: getSlotSequence,
     updateSlot: updateSlot,
@@ -359,7 +359,7 @@ function getSlotDefs() {
  *
  * @returns {Array}
  */
-function getDays() {
+function getSlotsByDay() {
     var copy = []; days.forEach(function(day) {
         copy.push(day.copy());
     });
