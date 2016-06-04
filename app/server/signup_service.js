@@ -4,7 +4,7 @@ module.exports = {
 	clear: clear,
 };
 
-var data = require('./data');
+var data = require('./data_local');
 
 
 /**
