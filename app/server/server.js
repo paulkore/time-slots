@@ -4,7 +4,7 @@ module.exports = {
 
 var express = require('express');
 var fs = require('fs');
-var data = require('./data_local');
+var data = require('./data');
 var api = require('./api');
 
 
