@@ -112,7 +112,7 @@ function signup(dayIndex, slotIndex, memberName, duration, successCallback, erro
 	// finally, update the slots accordingly
 	slotsToUpdate.forEach(function(slot, index) {
 		var isCharging = index >= slotsToUse;
-		data.updateSlot(slot.day, slot.id, memberName, isCharging);
+		data.updateSlot(null, slot.day, slot.id, memberName, isCharging);
 	});
 
 	// console.log("Signup successful");

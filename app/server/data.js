@@ -200,7 +200,16 @@ function getSlotSequence(dayIdx, slotIdx, length) {
     return seq;
 }
 
-function updateSlot(dayIdx, slotIdx, memberName, chargeTime) {
+/**
+ * Updates a particular slot record
+ *
+ * @param weekIdx the week index
+ * @param dayIdx the day index
+ * @param slotIdx the slot index within the day
+ * @param memberName the member name to set on this slot (null to clear)
+ * @param chargeTime true/false whether this time slot is for charging (null to clear)
+ */
+function updateSlot(weekIdx, dayIdx, slotIdx, memberName, chargeTime) {
     var slot = getSlotInternal(dayIdx, slotIdx);
     if (!slot) return;
     slot.memberName = memberName;
