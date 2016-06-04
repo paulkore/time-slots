@@ -8,8 +8,18 @@ module.exports = {
     clearForMember: clearForMember,
 };
 
-// TODO: using in-memory data for now. All signup information is lost upon application restart.
+
+
+//==============================================================
+//      In-memory data, that is not stored in the database
+//
+
+
+
+
 var slotDefs = null;
+
+// TODO: Since this is in-memory, all signup information is lost upon application restart. Convert to a database!
 var days = null;
 
 // TODO: add protection against overwriting, if two users submit a signup request at the same time (use "version id").
@@ -44,7 +54,7 @@ function DayRecord() {
         copy.name = self.name;
         copy.slots = [];
         self.slots.forEach(function(slot) {
-           copy.slots.push(slot.copy());
+            copy.slots.push(slot.copy());
         });
 
         return copy;
@@ -143,7 +153,6 @@ function createTimeSlots() {
             // Peak times: Mon-Thurs 9-11am, and 7-9pm
             var d = dayIdx; var t = slotDef.time;
             slot.peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
-
         });
     });
 }
@@ -155,6 +164,164 @@ function getSlotInternal(dayIdx, slotIdx) {
     if (slotIdx < 0 || slotIdx >= slots.length) return null;
     return slots[slotIdx];
 }
+
+
+
+
+
+//=============================================================
+//      Data that is kept in the database
+//
+
+
+
+
+
+var pg = require('pg');
+pg.defaults.ssl = true;
+
+var dbURL = process.env.TIMESLOTS_DATABASE_URL;
+if (!dbURL) {
+    console.log('Required environment variable not set: TIMESLOTS_DATABASE_URL');
+    process.exit(1);
+}
+
+/**
+ * Fetches rows returned from an SQL query.
+ *
+ * @param sql The text of the query with parameter placeholders, if any ($1, $2, $3, etc.)
+ * @param params The parameter values to substitute into the placeholders (as array)
+ * @param successCallback The function to call on success (result rows passed to this function)
+ * @param errorCallback The function to call on error (error message passed as argument)
+ */
+function fetchRows(sql, params, successCallback, errorCallback) {
+    pg.connect(dbURL, function(error, client) {
+        if (error) {
+            errorCallback('Database error: ' + error.message);
+        }
+        else {
+            client
+                .query(sql, params)
+                .on('row', function (row, result) {
+                    result.addRow(row);
+                })
+                .on('end', function (result) {
+                    successCallback(result.rows);
+                });
+        }
+    });
+}
+
+// TODO: sample use
+function fetchSlots(successCallback, errorCallback) {
+    return fetchRows('select * from timeslot;', [], successCallback, errorCallback);
+}
+
+// TODO: sample use
+function fetchSlotsForDay(dayIdx, successCallback, errorCallback) {
+    return fetchRows('select * from timeslot where day_idx = $1', [dayIdx], successCallback, errorCallback);
+}
+
+/**
+ * Initializes the database schema, and records (if necessary).
+ * If the number of records matches the expected number, they are left as-is.
+ */
+function initDatabase() {
+
+    /** Terminates the process on DB error, because there's no point in running the app if initialization fails */
+    function killOn(err) {
+        if (err) {
+            console.error('Database error: ' + err.message);
+            process.exit(1);
+        }
+    }
+
+    pg.connect(dbURL, function(err, client) {
+        killOn(err);
+
+        console.log('Initializing database schema...');
+        client.query('CREATE TABLE IF NOT EXISTS timeslot( ' +
+                        'week_idx INT NOT NULL, ' +
+                        'day_idx INT NOT NULL, ' +
+                        'slot_idx INT NOT NULL, ' +
+                        'PRIMARY KEY(week_idx, day_idx, slot_idx), ' +
+                        'member_name CHAR(12), ' +
+                        'charge_time BOOLEAN, ' +
+                        'peak_time BOOLEAN ' +
+                    ');',
+            function(err, res) {
+               killOn(err);
+
+               checkData();
+            });
+
+        function checkData() {
+            console.log('Checking state of data model...');
+            client.query('SELECT * FROM timeslot', function(err, res) {
+                killOn(err);
+
+                var count = res.rows.length;
+                var expected = days.length * slotDefs.length;
+
+                if (count == 0) {
+                    console.log('Data not initialized.');
+                    insertData();
+                }
+                else if (count != expected) {
+                    console.log('Unexpected number of records: ' + count + ', expected: ' + expected);
+                    clearAndInsertData();
+                }
+                else {
+                    console.log('Data already initialized. ');
+                    client.end();
+                }
+            });
+        }
+
+        function clearAndInsertData() {
+            console.log('Clearing all exisitng data...');
+            client.query('DELETE FROM timeslot', function(err, res) {
+                killOn(err);
+                insertData();
+            });
+        }
+
+        function insertData() {
+            console.log('Inserting data records...');
+
+            days.forEach(function(day, dayIdx) {
+                var lastDay = (dayIdx === days.length - 1);
+
+                slotDefs.forEach(function(slotDef, slotIdx) {
+                    var lastSlot = (slotIdx === slotDefs.length - 1);
+
+                    // Peak times: Mon-Thurs 9-11am, and 7-9pm
+                    var d = dayIdx; var t = slotDef.time;
+                    var peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
+
+                    client.query('INSERT INTO timeslot (week_idx, day_idx, slot_idx, member_name, charge_time, peak_time) ' +
+                        'values ($1, $2, $3, $4, $5, $6)', [0, dayIdx, slotIdx, null, null, peakTime], function (err, res) {
+                        killOn(err);
+
+                        if (lastDay && lastSlot) {
+                            // commit data after the last statement finishes
+                            console.log('... DONE');
+                            client.end();
+                        }
+                    })
+
+                });
+            });
+        }
+
+    });
+}
+
+
+
+
+
+
 
 
 //=============================================================
@@ -170,6 +337,8 @@ function initData() {
     createSlotDefs();
     createDays();
     createTimeSlots();
+
+    initDatabase();
 }
 
 /**
