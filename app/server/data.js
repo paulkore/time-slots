@@ -2,27 +2,22 @@ module.exports = {
     initData: initData,
     getSlotDefs: getSlotDefs,
     getSlotsByDay: getSlotsByDay,
-    getSlot: getSlot,
     getSlotSequence: getSlotSequence,
-    updateSlot: updateSlot,
+    bookSlotSequence: bookSlotSequence,
     clearForMember: clearForMember,
 };
+
+var c = require('./common');
+
+// TODO: add protection against overwriting, if two users submit a signup request at the same time (use "version id").
+
 
 
 
 //==============================================================
-//      In-memory data, that is not stored in the database
+//      Data entities
 //
 
-
-
-
-var slotDefs = null;
-
-// TODO: Since this is in-memory, all signup information is lost upon application restart. Convert to a database!
-var days = null;
-
-// TODO: add protection against overwriting, if two users submit a signup request at the same time (use "version id").
 
 
 /** Represents a definition of a time slot */
@@ -46,30 +41,36 @@ function DayRecord() {
 
     self.id = null; // the day's index
     self.name = null; // the day's name
-    self.slots = null; // the array of time slots within this day
+    self.slots = []; // the array of time slots within this day
 
     self.copy = function() {
         var copy = new DayRecord();
         copy.id = self.id;
         copy.name = self.name;
         copy.slots = [];
-        self.slots.forEach(function(slot) {
-            copy.slots.push(slot.copy());
-        });
-
         return copy;
     }
 }
 
 /** Represents one time slot, in a particular day */
-function TimeSlotRecord() {
+function TimeSlotRecord(row) {
     var self = this;
 
+    self.week = null; // the index of the week that this slot belongs to
     self.day = null; // the index of the day that this slot belongs to
     self.id = null; // the index of the time slot within the day
     self.peakTime = null; // "true" if this time slot is during "peak" hours
     self.chargeTime = null; // "true" if this time slot is required for charging the machine
     self.memberName = null; // the name of the member subscribed
+
+    if (row) { // optionally initialize from a DB row
+        self.week = row.week_idx;
+        self.day = row.day_idx;
+        self.id = row.slot_idx;
+        self.memberName = row.member_name;
+        self.chargeTime = row.charge_time;
+        self.peakTime = row.peak_time;
+    }
 
     self.copy = function() {
         var copy = new TimeSlotRecord();
@@ -79,8 +80,21 @@ function TimeSlotRecord() {
         copy.chargeTime = self.chargeTime;
         copy.memberName = self.memberName;
         return copy;
-    }
+    };
+
 }
+
+
+//==============================================================
+//      In-memory data, that is not stored in the database
+//
+
+
+/** Contains the slot-definitions */
+var slotDefs = null;
+/** Contains the days of week */
+var days = null;
+
 
 /** Creates the time slot definitions */
 function createSlotDefs() {
@@ -125,6 +139,7 @@ function createSlotDefs() {
     }
 }
 
+
 /** Creates all day records (will contain time slots) */
 function createDays() {
     var daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -140,31 +155,6 @@ function createDays() {
     });
 }
 
-/** Creates all time slot records in every day of the week */
-function createTimeSlots() {
-    days.forEach(function(day, dayIdx) {
-        slotDefs.forEach(function(slotDef, slotIdx) {
-            var slot = new TimeSlotRecord();
-            day.slots.push(slot);
-
-            slot.day = dayIdx;
-            slot.id = slotIdx;
-
-            // Peak times: Mon-Thurs 9-11am, and 7-9pm
-            var d = dayIdx; var t = slotDef.time;
-            slot.peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
-        });
-    });
-}
-
-/** Retrieves a slot at the given coordinates. Live data - for internal use only! */
-function getSlotInternal(dayIdx, slotIdx) {
-    if (dayIdx < 0 || dayIdx >= days.length) return null;
-    var slots = days[dayIdx].slots;
-    if (slotIdx < 0 || slotIdx >= slots.length) return null;
-    return slots[slotIdx];
-}
-
 
 
 
@@ -175,8 +165,6 @@ function getSlotInternal(dayIdx, slotIdx) {
 
 
 
-
-
 var pg = require('pg');
 pg.defaults.ssl = true;
 
@@ -184,42 +172,6 @@ var dbURL = process.env.TIMESLOTS_DATABASE_URL;
 if (!dbURL) {
     console.log('Required environment variable not set: TIMESLOTS_DATABASE_URL');
     process.exit(1);
-}
-
-/**
- * Fetches rows returned from an SQL query.
- *
- * @param sql The text of the query with parameter placeholders, if any ($1, $2, $3, etc.)
- * @param params The parameter values to substitute into the placeholders (as array)
- * @param successCallback The function to call on success (result rows passed to this function)
- * @param errorCallback The function to call on error (error message passed as argument)
- */
-function fetchRows(sql, params, successCallback, errorCallback) {
-    pg.connect(dbURL, function(error, client) {
-        if (error) {
-            errorCallback('Database error: ' + error.message);
-        }
-        else {
-            client
-                .query(sql, params)
-                .on('row', function (row, result) {
-                    result.addRow(row);
-                })
-                .on('end', function (result) {
-                    successCallback(result.rows);
-                });
-        }
-    });
-}
-
-// TODO: sample use
-function fetchSlots(successCallback, errorCallback) {
-    return fetchRows('select * from timeslot;', [], successCallback, errorCallback);
-}
-
-// TODO: sample use
-function fetchSlotsForDay(dayIdx, successCallback, errorCallback) {
-    return fetchRows('select * from timeslot where day_idx = $1', [dayIdx], successCallback, errorCallback);
 }
 
 /**
@@ -268,8 +220,11 @@ function initDatabase() {
                     insertData();
                 }
                 else if (count != expected) {
-                    console.log('Unexpected number of records: ' + count + ', expected: ' + expected);
-                    clearAndInsertData();
+                    console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
+                    // clearAndInsertData();
+
+                    // something is really wrong here... don't carry on
+                    process.exit(1);
                 }
                 else {
                     console.log('Data already initialized. ');
@@ -288,6 +243,7 @@ function initDatabase() {
 
         function insertData() {
             console.log('Inserting data records...');
+            // TODO: Figure out a more efficient way to insert the records. This is too slow because each INSERT is committed separately.
 
             days.forEach(function(day, dayIdx) {
                 var lastDay = (dayIdx === days.length - 1);
@@ -305,7 +261,7 @@ function initDatabase() {
 
                         if (lastDay && lastSlot) {
                             // commit data after the last statement finishes
-                            console.log('... DONE');
+                            console.log('Finished inserting data records');
                             client.end();
                         }
                     })
@@ -317,10 +273,42 @@ function initDatabase() {
     });
 }
 
+/**
+ * Fetches rows returned from an SQL query.
+ *
+ * @param sql The text of the query with parameter placeholders, if any ($1, $2, $3, etc.)
+ * @param params The parameter values to substitute into the placeholders (as array)
+ * @param successCallback The function to call on success (result rows passed to this function)
+ * @param errorCallback The function to call on error (error message passed as argument)
+ */
+function fetchRows(sql, params, successCallback, errorCallback) {
+    pg.connect(dbURL, function(error, client) {
+        if (error) {
+            errorCallback('Database error: ' + error.message);
+        }
+        else {
+            client
+                .query(sql, params)
+                .on('row', function (row, result) {
+                    result.addRow(row);
+                })
+                .on('end', function (result) {
+                    successCallback(result.rows);
+                });
+        }
+    });
+}
 
-
-
-
+/**
+ * Rolls back any un-committed transactions in a given session.
+ *
+ * TODO: verify if this even works...
+ */
+var rollback = function(client) {
+    client.query('ROLLBACK', function() {
+        client.end();
+    });
+};
 
 
 
@@ -336,8 +324,6 @@ function initDatabase() {
 function initData() {
     createSlotDefs();
     createDays();
-    createTimeSlots();
-
     initDatabase();
 }
 
@@ -359,71 +345,147 @@ function getSlotDefs() {
  *
  * @returns {Array}
  */
-function getSlotsByDay() {
-    var copy = []; days.forEach(function(day) {
-        copy.push(day.copy());
+function getSlotsByDay(successCallback, errorCallback) {
+    var slotsByDay = []; days.forEach(function(day) {
+        slotsByDay.push(day.copy());
     });
-    return copy;
+
+    fetchRows('SELECT * FROM timeslot ORDER BY week_idx, day_idx, slot_idx;', [],
+        function(rows) { // success
+            rows.forEach(function(row) {
+                var slot = new TimeSlotRecord(row);
+                var day = slotsByDay[row.day_idx];
+                day.slots.push(slot);
+            });
+
+            successCallback(slotsByDay);
+        },
+        function(err) { // error
+            errorCallback(err);
+        }
+    );
 }
 
-/**
- * Retrieves a slot at the given coordinates, or null if not found
- */
-function getSlot(dayIdx, slotIdx) {
-    var slot = getSlotInternal(dayIdx, slotIdx);
-    return slot ? slot.copy : null;
-}
 
 /**
  * Retrieves a sequence of slots from a particular day, starting at the given coordinates.
  * The sequence is of the requested length, or less if there aren't enough slots in the day.
  * If the first slot if not found, null is returned.
+ *
+ *
  */
-function getSlotSequence(dayIdx, slotIdx, length) {
-    // console.log("getSlotSequence called with: "+dayIdx+", "+slotIdx+", "+length);
+function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, errorCallback) {
+    console.log("data.getSlotSequence(weekIdx="+weekIdx+", dayIdx="+dayIdx+", slotIdx="+slotIdx+", length="+length);
 
-    if (dayIdx < 0 || dayIdx >= days.length) return null;
-    var slots = days[dayIdx].slots;
-    if (slotIdx < 0 || slotIdx >= slots.length) return null;
-    var seq = [];
-    for (var i=slotIdx; i<slots.length && seq.length < length; i++) {
-        seq.push(slots[i].copy());
-    }
-    return seq;
+    fetchRows('SELECT * FROM timeslot WHERE week_idx = $1 AND day_idx = $2 and slot_idx >= $3 ' +
+        'ORDER BY week_idx, day_idx, slot_idx LIMIT $4', [weekIdx, dayIdx, slotIdx, length],
+        function(rows) {
+            var seq = [];
+            rows.forEach(function(row) {
+                var slot = new TimeSlotRecord(row);
+                seq.push(slot);
+            });
+
+            successCallback(seq);
+        },
+        function(err) { // error
+            errorCallback(err);
+        });
 }
 
 /**
- * Updates a particular slot record
+ * Books a sequence of slots for a particular member;
  *
- * @param weekIdx the week index
- * @param dayIdx the day index
- * @param slotIdx the slot index within the day
- * @param memberName the member name to set on this slot (null to clear)
- * @param chargeTime true/false whether this time slot is for charging (null to clear)
+ * @param weekIdx The week index
+ * @param dayIdx The day index
+ * @param slotIdx The index of the first slot in the sequence
+ * @param memberName The member name to set on this slot
+ * @param slotsToUse The number of slots to mark for use
+ * @param slotsToCharge The number of slots to mark for charging
+ *
+ * @param successCallback This function will be called upon success
+ * @param errorCallback This function will be called upon error, with an error message
  */
-function updateSlot(weekIdx, dayIdx, slotIdx, memberName, chargeTime) {
-    var slot = getSlotInternal(dayIdx, slotIdx);
-    if (!slot) return;
-    slot.memberName = memberName;
-    slot.chargeTime = chargeTime;
+function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slotsToCharge, successCallback, errorCallback) {
+    console.log("data.bookSlotSequence(weekIdx="+weekIdx+", dayIdx="+dayIdx+", slotIdx="+slotIdx+", memberName="+memberName+", slotsToUse="+slotsToUse+", slotsToCharge="+slotsToCharge);
+
+    pg.connect(dbURL, function(err, client) {
+        if (err) {
+            errorCallback('Database error: ' + err.message);
+        }
+        else {
+            var firstSlotIdx = slotIdx;
+            var firstChargeIdx = slotIdx + slotsToUse;
+            var lastSlotIdx = firstChargeIdx + slotsToCharge - 1;
+
+            console.log("Updating slots: weekIdx="+weekIdx+", dayIdx="+dayIdx+", firstSlotIdx="+firstSlotIdx+", firstChargeIdx="+firstChargeIdx+", lastSlotIdx="+lastSlotIdx);
+
+            client.query('UPDATE timeslot ' +
+                'SET member_name = $6, ' +
+                'charge_time = CASE WHEN slot_idx >= $5 THEN true ELSE false END ' +
+                'WHERE week_idx = $1 AND day_idx = $2 AND slot_idx >= $3 AND slot_idx <= $4',
+                [weekIdx, dayIdx, firstSlotIdx, lastSlotIdx, firstChargeIdx, memberName],
+                    function (err, res) {
+                        if (err) {
+                            errorCallback('Database error: ' + err.message);
+                        }
+                        else {
+                            console.log("Successfully updated slot sequence");
+                            successCallback();
+                        }
+                    })
+
+        }
+    });
+
 }
 
 /**
  * Clears all slots registered under the given member name.
- * Returns false, if no such records were encountered.
+ *
+ * @param memberName The name of the member whose bookings are to be cleared
+ * @param successCallback This function will be called upon success, with a boolean argument
+ *                        indicating whether any existing records were found, or not.
+ * @param errorCallback This function will be called upon error, with an error message
  */
-function clearForMember(memberName) {
-    var found = false;
-    days.forEach(function(day) {
-        day.slots.forEach(function(slot) {
-            if (slot.memberName === memberName) {
-                slot.memberName = null;
-                slot.chargeTime = null;
-                found = true;
+function clearForMember(memberName, successCallback, errorCallback) {
+    console.log("data.clearForMember(memberName="+memberName+")");
+
+    if (c.isEmptyStr(memberName)) {
+        errorCallback("Invalid input - member name can't be empty");
+        return;
+    }
+
+    fetchRows("SELECT * FROM timeslot WHERE member_name = $1", [memberName],
+        function(rows) { // success
+            if (rows.length === 0) {
+                // no matching records were found
+                successCallback(false);
             }
-        });
-    });
-    return found;
+            else {
+                pg.connect(dbURL, function(err, client) {
+                    if (err) {
+                        errorCallback('Database error: ' + err.message);
+                    }
+                    else {
+                        client.query("UPDATE timeslot SET member_name = null, charge_time = null " +
+                            "WHERE member_name = $1", [memberName],
+                            function(err, res) {
+                                if (err) {
+                                    errorCallback('Database error: ' + err.message);
+                                }
+                                else {
+                                    successCallback(true);
+                                }
+                            });
+                    }
+                });
+            }
+        },
+        function(err) { // error
+            errorCallback(err);
+        }
+    );
 }
 
 

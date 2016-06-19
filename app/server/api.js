@@ -9,6 +9,8 @@ var svc = require('./signup_service');
 var c = require('./common');
 
 function ping(req, res) {
+    console.log("api.ping()");
+
     res.json({
         response: 'PONG!',
         time: c.timestamp(),
@@ -16,10 +18,21 @@ function ping(req, res) {
 }
 
 function getSheet(req, res) {
-    res.json(svc.getSheetData());
+    console.log("api.getSheet()");
+
+    svc.getSheetData(
+        function(sheetData) { // success
+            res.json(sheetData);
+        },
+        function(err) { // failure
+            console.error("Error message: " + err);
+            res.status(500).send({message: null});
+        });
 }
 
 function signup(req, res) {
+    console.log("api.signup()");
+
     var body = req.body;
 
     // validate request data
@@ -50,7 +63,7 @@ function signup(req, res) {
     svc.signup(dayIndex, slotIndex, memberName, duration,
         function() {
             // signup was successful, re-fetch the slot data
-            res.json(svc.getSheetData());
+            getSheet(req, res);
         },
         function(userMessage) {
             // sign-up failed
@@ -66,6 +79,8 @@ function signup(req, res) {
 }
 
 function clear(req, res) {
+    console.log("api.clear()");
+
     var body = req.body;
 
     // validate request data
@@ -83,7 +98,7 @@ function clear(req, res) {
     svc.clear(memberName,
         function() {
             // clear was successful, re-fetch the slot data
-            res.json(svc.getSheetData());
+            getSheet(req, res);
         },
         function(userMessage) {
             if (userMessage) {

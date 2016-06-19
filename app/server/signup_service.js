@@ -10,66 +10,78 @@ var data = require('./data');
 /**
  * Returns the current state of the signup sheet
  */
-function getSheetData() {
+function getSheetData(successCallback, errorCallback) {
+	console.log("svc.getSheetData()");
+
 	var slotDefs = data.getSlotDefs();
-	var daysData = data.getSlotsByDay();
 
-	var days = [];
-	daysData.forEach(function(dayData) {
-		var day = {
-			id: dayData.id,
-			name: dayData.name,
-			slots: [],
-		};
-		days.push(day);
+	data.getSlotsByDay(
+		function(daysData) {
 
-		// combine adjacent identical slots for better presentation
-		var currentSlot = null;
-		function pushCurrentSlot() {
-			if (currentSlot) {
-				currentSlot.heightClass = 'slot-height-'+currentSlot.height;
-				day.slots.push(currentSlot);
-				currentSlot = null;
-			}
-		}
+			var days = [];
+			daysData.forEach(function (dayData) {
+				var day = {
+					id: dayData.id,
+					name: dayData.name,
+					slots: [],
+				};
+				days.push(day);
 
-		dayData.slots.forEach(function(slot) {
-			if (slotsCanBeGrouped(currentSlot, slot)) {
-				currentSlot.height += 1;
-			}
-			else {
+				// combine adjacent identical slots for better presentation
+				var currentSlot = null;
+
+				function pushCurrentSlot() {
+					if (currentSlot) {
+						currentSlot.heightClass = 'slot-height-' + currentSlot.height;
+						day.slots.push(currentSlot);
+						currentSlot = null;
+					}
+				}
+
+				dayData.slots.forEach(function (slot) {
+					if (slotsCanBeGrouped(currentSlot, slot)) {
+						currentSlot.height += 1;
+					}
+					else {
+						pushCurrentSlot();
+
+						// start a new slot
+						currentSlot = slot;
+						currentSlot.isAvailableForUse = isAvailableForUse(slot);
+						currentSlot.isAvailableForCharging = isAvailableForCharging(slot);
+						currentSlot.height = 1; // for grouping purposes
+					}
+				});
+
+				// push the last slot, if it exists
 				pushCurrentSlot();
+			});
 
-				// start a new slot
-				currentSlot = slot;
-				currentSlot.isAvailableForUse = isAvailableForUse(slot);
-				currentSlot.isAvailableForCharging = isAvailableForCharging(slot);
-				currentSlot.height = 1; // for grouping purposes
-			}
-		});
+			successCallback({
+				slotDefs: slotDefs,
+				days: days,
+			});
+		},
 
-		// push the last slot, if it exists
-		pushCurrentSlot();
-	});
-
-	return {
-		slotDefs: slotDefs,
-		days: days,
-	}
+		function(err) {
+			console.error("system error: " + err);
+			errorCallback();
+		}
+	);
 }
 
 /**
  * Attempts to sign up a member for a given duration, starting at a given time slot
  */
 function signup(dayIndex, slotIndex, memberName, duration, successCallback, errorCallback) {
-	//console.log("signup called with: "+dayIndex+", "+slotIndex+", "+memberName+", "+duration);
+	console.log("svc.signup(dayIndex="+dayIndex+", slotIndex="+slotIndex+", memberName="+memberName+", duration="+duration+")");
 
 	var slotsToUse = null;
 	if (duration === "1/2") slotsToUse = 1;
 	if (duration === "1") slotsToUse = 2;
 	if (slotsToUse === null) {
-		// console.log("system error: unsupported duration value");
-		if (errorCallback) errorCallback();
+		console.error("system error: unsupported duration value");
+		errorCallback();
 		return;
 	}
 
@@ -77,56 +89,77 @@ function signup(dayIndex, slotIndex, memberName, duration, successCallback, erro
 	var slotsToCharge = slotsToUse * 2;
 	var totalSlots =  slotsToUse + slotsToCharge;
 
-	var slots = data.getSlotSequence(dayIndex, slotIndex, totalSlots);
-	if (!slots || slots.length == 0) {
-		// console.log("system error: failed to produce slot sequence");
-		if (errorCallback) errorCallback();
-		return;
-	}
-	// console.log("Retrieved sequence of " + slots.length + " slots");
+	data.getSlotSequence(0, dayIndex, slotIndex, totalSlots,
+		function(slots) {
+			if (!slots || slots.length === 0) {
+				console.error("system error: failed to produce slot sequence");
+				errorCallback();
+				return;
+			}
+			console.log("Retrieved sequence of " + slots.length + " slots");
+			
+			for (var i = 0; i < slotsToUse; i++) {
+				if (i >= slots.length) {
+					errorCallback("Not enough time in the given selection, please try another slot");
+					return;
+				}
+				if (!isAvailableForUse(slots[i])) {
+					errorCallback("Unavailable slot in the given selection, please try another slot");
+					return;
+				}
+			}
+			
+			for (var j = slotsToUse; j < totalSlots; j++) {
+				if (j >= slots.length) {
+					break; // this is fine - machine will be charging past closing hours
+				}
+				if (!isAvailableForCharging(slots[j])) {
+					errorCallback("Not enough time to charge, please try another slot");
+					return;
+				}
+			}
 
-	var slotsToUpdate = [];
-	for (var i=0; i<slotsToUse; i++) {
-		if (i >= slots.length) {
-			if (errorCallback) errorCallback("Not enough time in the given selection, please try another slot");
-			return;
-		}
-		if (!isAvailableForUse(slots[i])) {
-			if (errorCallback) errorCallback("Unavailable slot in the given selection, please try another slot");
-			return;
-		}
-		slotsToUpdate.push(slots[i]);
-	}
+			console.log("Booking slot sequence...");
+			data.bookSlotSequence(0, dayIndex, slotIndex, memberName, slotsToUse, slotsToCharge,
+				function() { // on success
+					successCallback();
+				},
+				function(err) { // on error
+					console.error("system error: " + err);
+					errorCallback();
+				}
+			);
+		},
 
-	for (var j=slotsToUse; j<totalSlots; j++) {
-		if (j >= slots.length) {
-			break; // this is fine - machine will be charging past closing hours
+		function(err) {
+			console.error("system error: " + err);
+			errorCallback();
 		}
-		if (!isAvailableForCharging(slots[j])) {
-			if (errorCallback) errorCallback("Not enough time to charge, please try another slot");
-			return;
-		}
-		slotsToUpdate.push(slots[j]);
-	}
+	);
 
-	// finally, update the slots accordingly
-	slotsToUpdate.forEach(function(slot, index) {
-		var isCharging = index >= slotsToUse;
-		data.updateSlot(null, slot.day, slot.id, memberName, isCharging);
-	});
-
-	// console.log("Signup successful");
-	if (successCallback) successCallback();
 }
 
 /**
  * Attempts to clear all bookings by a certain member
  */
 function clear(memberName, successCallback, errorCallback) {
-	//console.log("Clear called with: " + memberName);
-	var found = data.clearForMember(memberName);
-	if (found && successCallback) successCallback();
-	if (!found && errorCallback) errorCallback("There are no bookings under this member's name");
+	console.log("svc.clear(memberName="+memberName+")");
+
+	data.clearForMember(memberName,
+		function(found) { // success
+			if (found) {
+				successCallback();
+			}
+			else {
+				errorCallback("There are no bookings under this member's name")
+			}
+		},
+		function(err) { // error
+			console.error("system error:" + err);
+			errorCallback();
+		}
+	);
+
 }
 
 /**
