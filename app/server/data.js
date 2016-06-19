@@ -8,78 +8,7 @@ module.exports = {
 };
 
 var c = require('./common');
-
-
-
-//==============================================================
-//      Data entities
-//
-
-
-
-/** Represents a definition of a time slot */
-function TimeSlotDef() {
-    var self = this;
-
-    self.time = null; // the start time of the slot, represented as fractional hours
-    self.displayTime = null; // the start time of the slot (human-readable)
-
-    self.copy = function() {
-        var copy = new TimeSlotDef();
-        copy.time = self.time;
-        copy.displayTime = self.displayTime;
-        return copy;
-    }
-}
-
-/** Represents one day in the week */
-function DayRecord() {
-    var self = this;
-
-    self.id = null; // the day's index
-    self.name = null; // the day's name
-    self.slots = []; // the array of time slots within this day
-
-    self.copy = function() {
-        var copy = new DayRecord();
-        copy.id = self.id;
-        copy.name = self.name;
-        copy.slots = [];
-        return copy;
-    }
-}
-
-/** Represents one time slot, in a particular day */
-function TimeSlotRecord(row) {
-    var self = this;
-
-    self.week = null; // the index of the week that this slot belongs to
-    self.day = null; // the index of the day that this slot belongs to
-    self.id = null; // the index of the time slot within the day
-    self.peakTime = null; // "true" if this time slot is during "peak" hours
-    self.chargeTime = null; // "true" if this time slot is required for charging the machine
-    self.memberName = null; // the name of the member subscribed
-
-    if (row) { // optionally initialize from a DB row
-        self.week = row.week_idx;
-        self.day = row.day_idx;
-        self.id = row.slot_idx;
-        self.memberName = row.member_name;
-        self.chargeTime = row.charge_time;
-        self.peakTime = row.peak_time;
-    }
-
-    self.copy = function() {
-        var copy = new TimeSlotRecord();
-        copy.day = self.day;
-        copy.id = self.id;
-        copy.peakTime = self.peakTime;
-        copy.chargeTime = self.chargeTime;
-        copy.memberName = self.memberName;
-        return copy;
-    };
-
-}
+var en = require('./entities');
 
 
 //==============================================================
@@ -122,7 +51,7 @@ function createSlotDefs() {
     var id = 0;
     var startTime = 6.0;        // <-- Club opens at 6 a.m.
     while (startTime < 23.0) {  // <-- Club closes at 11 p.m.
-        var slot = new TimeSlotDef();
+        var slot = new en.TimeSlotDef();
         slotDefs.push(slot);
 
         slot.id = id;
@@ -143,7 +72,7 @@ function createDays() {
 
     days = [];
     daysOfWeek.forEach(function(dayName, dayIdx) {
-        var day = new DayRecord();
+        var day = new en.DayRecord();
         days.push(day);
 
         day.id = dayIdx;
@@ -350,7 +279,7 @@ function getSlotsByDay(successCallback, errorCallback) {
     fetchRows('SELECT * FROM timeslot ORDER BY week_idx, day_idx, slot_idx;', [],
         function(rows) { // success
             rows.forEach(function(row) {
-                var slot = new TimeSlotRecord(row);
+                var slot = new en.TimeSlotRecord(row);
                 var day = slotsByDay[row.day_idx];
                 day.slots.push(slot);
             });
@@ -379,7 +308,7 @@ function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, erro
         function(rows) {
             var seq = [];
             rows.forEach(function(row) {
-                var slot = new TimeSlotRecord(row);
+                var slot = new en.TimeSlotRecord(row);
                 seq.push(slot);
             });
 
