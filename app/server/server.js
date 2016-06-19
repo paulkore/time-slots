@@ -92,7 +92,7 @@ function TimeSlotsApp() {
     self.initialize = function() {
         self.setupTerminationHandlers();
         self.initializeServer();
-        data.initData();
+        data.initDatabase();
     };
 
     /**

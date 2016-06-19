@@ -5,6 +5,7 @@ module.exports = {
 };
 
 var data = require('./data');
+var def = require('./definitions');
 
 
 /**
@@ -13,7 +14,7 @@ var data = require('./data');
 function getSheetData(successCallback, errorCallback) {
 	console.log("svc.getSheetData()");
 
-	var slotDefs = data.getSlotDefs();
+	var slotDefs = def.getSlotDefs();
 
 	data.getSlotsByDay(
 		function(daysData) {
@@ -196,8 +197,8 @@ function slotsCanBeGrouped(slot1, slot2) {
 		return false;
 	}
 
-	function isBooked(slot) {return slot.memberName && !slot.chargeTime};
-	function isCharging(slot) {return slot.memberName && slot.chargeTime};
+	function isBooked(slot) {return slot.memberName && !slot.chargeTime}
+	function isCharging(slot) {return slot.memberName && slot.chargeTime}
 
 	if (slot1.memberName === slot2.memberName) {
 		if (isBooked(slot1) && isBooked(slot2)) {
