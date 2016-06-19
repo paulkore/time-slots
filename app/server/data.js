@@ -130,15 +130,16 @@ function initDatabase() {
 function getSlotsByDay(successCallback, errorCallback) {
     var slotsByDay = def.getDays();
 
-    db.connect(
-        function(err) {
-            errorCallback("Database error: " + err.message);
-        },
-        function(client) {
+    /** reports a database error */
+    function handleError(err) {
+        errorCallback('Database error: ' + err.message);
+    }
+
+    db.connect(handleError, function(client) {
             client.query("SELECT * FROM timeslot ORDER BY week_idx, day_idx, slot_idx;", [],
                 function(err, res) {
                     if (err) {
-                        errorCallback("Database error: " + err.message);
+                        handleError(err);
                     }
                     else {
                         res.rows.forEach(function(row) {
@@ -172,17 +173,18 @@ function getSlotsByDay(successCallback, errorCallback) {
 function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, errorCallback) {
     console.log("data.getSlotSequence(weekIdx="+weekIdx+", dayIdx="+dayIdx+", slotIdx="+slotIdx+", length="+length);
 
-    db.connect(
-        function(err) {
-            errorCallback("Database error: " + err.message);
-        },
-        function(client) {
+    /** reports a database error */
+    function handleError(err) {
+        errorCallback('Database error: ' + err.message);
+    }
+
+    db.connect(handleError, function(client) {
             client.query("SELECT * FROM timeslot WHERE week_idx = $1 AND day_idx = $2 and slot_idx >= $3 " +
                 "ORDER BY week_idx, day_idx, slot_idx LIMIT $4", [weekIdx, dayIdx, slotIdx, length],
 
                 function (err, res) {
                     if (err) {
-                        errorCallback("Database error: " + err.message);
+                        handleError(err);
                     }
                     else {
                         var seq = []; res.rows.forEach(function (row) {
@@ -214,11 +216,12 @@ function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, erro
 function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slotsToCharge, successCallback, errorCallback) {
     console.log("data.bookSlotSequence(weekIdx="+weekIdx+", dayIdx="+dayIdx+", slotIdx="+slotIdx+", memberName="+memberName+", slotsToUse="+slotsToUse+", slotsToCharge="+slotsToCharge);
 
-    db.connect(
-        function(err) {
-            errorCallback('Database error: ' + err.message);
-        },
-        function(client) {
+    /** reports a database error */
+    function handleError(err) {
+        errorCallback('Database error: ' + err.message);
+    }
+
+    db.connect(handleError, function(client) {
             var firstSlotIdx = slotIdx;
             var firstChargeIdx = slotIdx + slotsToUse;
             var lastSlotIdx = firstChargeIdx + slotsToCharge - 1;
@@ -232,7 +235,7 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
                 [weekIdx, dayIdx, firstSlotIdx, lastSlotIdx, firstChargeIdx, memberName],
                     function (err) {
                         if (err) {
-                            errorCallback('Database error: ' + err.message);
+                            handleError(err);
                         }
                         else {
                             console.log("Successfully updated slot sequence");
@@ -294,6 +297,7 @@ function clearForMember(memberName, successCallback, errorCallback) {
         });
     }
 }
+
 
 
 
