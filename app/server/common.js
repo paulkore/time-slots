@@ -8,7 +8,7 @@ module.exports = {
 var moment = require('moment');
 
 function timestamp() {
-    return moment().format("dddd, MMMM Do YYYY, h:mm:ss a");
+    return moment().format("YYYY/MM/DD hh:mm:ss A");
 }
 
 function trimStr(str) {
