@@ -6,7 +6,7 @@ var express = require('express');
 var fs = require('fs');
 var data = require('./data');
 var api = require('./api');
-
+var c = require('./common');
 
 function TimeSlotsApp() {
 
@@ -119,20 +119,29 @@ function TimeSlotsApp() {
         });
 
         self.app.get('/api/ping', function (req, res) {
+            logCall("/api/ping");
             api.ping(req, res);
         });
 
         self.app.get('/api/sheet', function (req, res) {
+            logCall("/api/sheet");
             api.getSheet(req, res);
         });
 
         self.app.post('/api/signup', function (req, res) {
+            logCall("/api/signup");
             api.signup(req, res);
         });
 
         self.app.post('/api/clear', function (req, res) {
+            logCall("/api/clear");
             api.clear(req, res);
         });
     };
+
+    /** Helper function: logs every incoming API call */
+    function logCall(path) {
+        console.log("\n[" + c.timestamp() + "] ----- API CALL: " + path + " --------------------")
+    }
 
 }
