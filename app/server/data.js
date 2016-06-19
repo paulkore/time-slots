@@ -9,9 +9,6 @@ module.exports = {
 
 var c = require('./common');
 
-// TODO: add protection against overwriting, if two users submit a signup request at the same time (use "version id").
-
-
 
 
 //==============================================================
@@ -405,6 +402,8 @@ function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, erro
  *
  * @param successCallback This function will be called upon success
  * @param errorCallback This function will be called upon error, with an error message
+ *
+ * TODO: add collision-protection, for when two users submit a signup request at the same time
  */
 function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slotsToCharge, successCallback, errorCallback) {
     console.log("data.bookSlotSequence(weekIdx="+weekIdx+", dayIdx="+dayIdx+", slotIdx="+slotIdx+", memberName="+memberName+", slotsToUse="+slotsToUse+", slotsToCharge="+slotsToCharge);
