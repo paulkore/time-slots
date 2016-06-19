@@ -83,7 +83,7 @@ function initDatabase() {
 
         function recreateRecords() {
             console.log('Clearing all exisitng data...');
-            client.query('DELETE FROM timeslot', function (err, res) {
+            client.query('DELETE FROM timeslot', function(err) {
                 dieOnError(err);
                 insertRecords();
             });
@@ -230,7 +230,7 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
                 'charge_time = CASE WHEN slot_idx >= $5 THEN true ELSE false END ' +
                 'WHERE week_idx = $1 AND day_idx = $2 AND slot_idx >= $3 AND slot_idx <= $4',
                 [weekIdx, dayIdx, firstSlotIdx, lastSlotIdx, firstChargeIdx, memberName],
-                    function (err, res) {
+                    function (err) {
                         if (err) {
                             errorCallback('Database error: ' + err.message);
                         }
