@@ -36,90 +36,91 @@ function initDatabase() {
     var slotDefs = def.getSlotDefs();
 
 
-    db.connect(dieOnError, function(client) {
+    db.connect(dieOnError, checkSchema);
 
+    function checkSchema(client) {
         console.log('Initializing database schema...');
         client.query(
             'CREATE TABLE IF NOT EXISTS timeslot( ' +
-                'week_idx INT NOT NULL, ' +
-                'day_idx INT NOT NULL, ' +
-                'slot_idx INT NOT NULL, ' +
-                'PRIMARY KEY(week_idx, day_idx, slot_idx), ' +
-                'member_name CHAR(12), ' +
-                'charge_time BOOLEAN, ' +
-                'peak_time BOOLEAN ' +
+            'week_idx INT NOT NULL, ' +
+            'day_idx INT NOT NULL, ' +
+            'slot_idx INT NOT NULL, ' +
+            'PRIMARY KEY(week_idx, day_idx, slot_idx), ' +
+            'member_name CHAR(12), ' +
+            'charge_time BOOLEAN, ' +
+            'peak_time BOOLEAN ' +
             ');',
             function (err) {
                 dieOnError(err);
-                checkData();
+                checkData(client);
             });
+    }
 
-        function checkData() {
-            console.log('Checking state of data model...');
-            client.query('SELECT * FROM timeslot', function (err, res) {
-                dieOnError(err);
+    function checkData(client) {
+        console.log('Verifying data model...');
+        client.query('SELECT * FROM timeslot', function (err, res) {
+            dieOnError(err);
 
-                var count = res.rows.length;
-                var expected = days.length * slotDefs.length;
+            var count = res.rows.length;
+            var expected = days.length * slotDefs.length;
 
-                if (count == 0) {
-                    console.log('Data not initialized.');
-                    insertRecords();
-                }
-                else if (resetData === true) {
-                    console.log('Re-creating data model (dev feature)');
-                    recreateRecords();
-                }
-                else if (count != expected) {
-                    console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
-                    process.exit(1); // something is really wrong here... don't carry on
-                }
-                else {
-                    console.log('Data already initialized. ');
-                    client.end();
-                }
-            });
-        }
-
-        function recreateRecords() {
-            console.log('Clearing all exisitng data...');
-            client.query('DELETE FROM timeslot', function(err) {
-                dieOnError(err);
+            if (count == 0) {
+                console.log('Data not initialized.');
                 insertRecords();
+            }
+            else if (resetData === true) {
+                console.log('Re-creating data model (dev feature)');
+                recreateRecords();
+            }
+            else if (count != expected) {
+                console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
+                process.exit(1); // something is really wrong here... don't carry on
+            }
+            else {
+                console.log('Data model already initialized. ');
+                client.end();
+            }
+        });
+    }
+
+    function recreateRecords(client) {
+        console.log('Clearing all exisitng data...');
+        client.query('DELETE FROM timeslot', function(err) {
+            dieOnError(err);
+            insertRecords();
+        });
+    }
+
+    function insertRecords(client) {
+        console.log('Inserting data records...');
+        // TODO: Figure out a more efficient way to insert the records. This is too slow because each INSERT is committed separately.
+
+        days.forEach(function (day, dayIdx) {
+            var lastDay = (dayIdx === days.length - 1);
+
+            slotDefs.forEach(function (slotDef, slotIdx) {
+                var lastSlot = (slotIdx === slotDefs.length - 1);
+
+                // Peak times: Mon-Thurs 9-11am, and 7-9pm
+                var d = dayIdx;
+                var t = slotDef.time;
+                var peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
+
+                client.query('INSERT INTO timeslot (week_idx, day_idx, slot_idx, member_name, charge_time, peak_time) ' +
+                    'values ($1, $2, $3, $4, $5, $6)', [0, dayIdx, slotIdx, null, null, peakTime], function(err) {
+                    dieOnError(err);
+
+                    if (lastDay && lastSlot) {
+                        // commit data after the last statement finishes
+                        console.log('Finished inserting data records');
+                        client.end();
+                    }
+                })
+
             });
-        }
+        });
+    }
 
-        function insertRecords() {
-            console.log('Inserting data records...');
-            // TODO: Figure out a more efficient way to insert the records. This is too slow because each INSERT is committed separately.
-
-            days.forEach(function (day, dayIdx) {
-                var lastDay = (dayIdx === days.length - 1);
-
-                slotDefs.forEach(function (slotDef, slotIdx) {
-                    var lastSlot = (slotIdx === slotDefs.length - 1);
-
-                    // Peak times: Mon-Thurs 9-11am, and 7-9pm
-                    var d = dayIdx;
-                    var t = slotDef.time;
-                    var peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
-
-                    client.query('INSERT INTO timeslot (week_idx, day_idx, slot_idx, member_name, charge_time, peak_time) ' +
-                        'values ($1, $2, $3, $4, $5, $6)', [0, dayIdx, slotIdx, null, null, peakTime], function(err) {
-                        dieOnError(err);
-
-                        if (lastDay && lastSlot) {
-                            // commit data after the last statement finishes
-                            console.log('Finished inserting data records');
-                            client.end();
-                        }
-                    })
-
-                });
-            });
-        }
-
-    });
 }
 
 /**
