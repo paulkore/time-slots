@@ -222,18 +222,26 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
 
             console.log("Updating slots: weekIdx="+weekIdx+", dayIdx="+dayIdx+", firstSlotIdx="+firstSlotIdx+", firstChargeIdx="+firstChargeIdx+", lastSlotIdx="+lastSlotIdx);
 
-            client.query('UPDATE timeslot ' +
-                'SET member_name = $6, ' +
-                'charge_time = CASE WHEN slot_idx >= $5 THEN true ELSE false END ' +
-                'WHERE week_idx = $1 AND day_idx = $2 AND slot_idx >= $3 AND slot_idx <= $4',
+            var tx = db.beginTransaction(client, handleError);
+            tx.query("UPDATE timeslot " +
+                "SET member_name = $6, " +
+                "charge_time = CASE WHEN slot_idx >= $5 THEN true ELSE false END " +
+                "WHERE week_idx = $1 AND day_idx = $2 AND slot_idx >= $3 AND slot_idx <= $4",
                 [weekIdx, dayIdx, firstSlotIdx, lastSlotIdx, firstChargeIdx, memberName],
                     function (err) {
                         if (err) {
                             handleError(err);
                         }
                         else {
-                            console.log("Successfully updated slot sequence");
-                            successCallback();
+                            tx.commit(function(err) {
+                                if (err) {
+                                    handleError(err);
+                                }
+                                else {
+                                    console.log("Successfully updated slot sequence");
+                                    successCallback();
+                                }
+                            });
                         }
                     })
 
@@ -281,12 +289,21 @@ function clearForMember(memberName, successCallback, errorCallback) {
     }
 
     function clearExistingBookings(client) {
-        client.query("UPDATE timeslot SET member_name = null, charge_time = null WHERE member_name = $1", [memberName], function(err) {
+        var tx = db.beginTransaction(client, handleError);
+        tx.query("UPDATE timeslot SET member_name = null, charge_time = null WHERE member_name = $1", [memberName], function(err) {
             if (err) {
                 handleError(err);
             }
             else {
-                successCallback(true);
+                tx.commit(function(err) {
+                    if (err) {
+                        handleError(err);
+                    }
+                    else {
+                        successCallback(true);
+                    }
+                });
+
             }
         });
     }
