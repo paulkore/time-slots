@@ -33,10 +33,9 @@ function initDatabase(successCallback) {
     var days = def.getDays();
     var slotDefs = def.getSlotDefs();
 
-
     db.connect(dieOnError, checkSchema);
 
-    function checkSchema(client) {
+    function checkSchema(client, done) {
         console.log('Verifying database schema...');
         client.query(
             'CREATE TABLE IF NOT EXISTS timeslot( ' +
@@ -50,11 +49,11 @@ function initDatabase(successCallback) {
             ');',
             function (err) {
                 dieOnError(err);
-                checkDataModel(client);
+                checkDataModel(client, done);
             });
     }
 
-    function checkDataModel(client) {
+    function checkDataModel(client, done) {
         console.log('Verifying data model...');
         client.query('SELECT * FROM timeslot', function (err, res) {
             dieOnError(err);
@@ -64,7 +63,7 @@ function initDatabase(successCallback) {
 
             if (count == 0) {
                 console.log('Data model not initialized.');
-                createDataModel(client);
+                createDataModel(client, done);
             }
             else if (count != expected) {
                 console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
@@ -72,12 +71,12 @@ function initDatabase(successCallback) {
             }
             else {
                 console.log('Data model already initialized. ');
-                finish();
+                finish(done);
             }
         });
     }
 
-    function createDataModel(client) {
+    function createDataModel(client, done) {
         console.log("Starting database transaction...");
         var tx = db.beginTransaction(client, dieOnError);
 
@@ -102,11 +101,13 @@ function initDatabase(successCallback) {
             dieOnError(err);
 
             console.log("Transaction committed successfully");
-            finish();
+            finish(done);
         });
     }
 
-    function finish() {
+    function finish(done) {
+        done();
+
         console.log("========================");
         console.log("  Application is ready  ");
         console.log("========================\n");
@@ -129,7 +130,7 @@ function getSlotsByDay(successCallback, errorCallback) {
         errorCallback('Database error: ' + err.message);
     }
 
-    db.connect(handleError, function(client) {
+    db.connect(handleError, function(client, done) {
             client.query("SELECT * FROM timeslot ORDER BY week_idx, day_idx, slot_idx;", [],
                 function(err, res) {
                     if (err) {
@@ -142,6 +143,7 @@ function getSlotsByDay(successCallback, errorCallback) {
                             day.slots.push(slot);
                         });
 
+                        done();
                         successCallback(slotsByDay);
                     }
                 }
@@ -172,7 +174,7 @@ function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, erro
         errorCallback('Database error: ' + err.message);
     }
 
-    db.connect(handleError, function(client) {
+    db.connect(handleError, function(client, done) {
             client.query("SELECT * FROM timeslot WHERE week_idx = $1 AND day_idx = $2 and slot_idx >= $3 " +
                 "ORDER BY week_idx, day_idx, slot_idx LIMIT $4", [weekIdx, dayIdx, slotIdx, length],
 
@@ -186,6 +188,7 @@ function getSlotSequence(weekIdx, dayIdx, slotIdx, length, successCallback, erro
                             seq.push(slot);
                         });
 
+                        done();
                         successCallback(seq);
                     }
                 });
@@ -215,7 +218,7 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
         errorCallback('Database error: ' + err.message);
     }
 
-    db.connect(handleError, function(client) {
+    db.connect(handleError, function(client, done) {
             var firstSlotIdx = slotIdx;
             var firstChargeIdx = slotIdx + slotsToUse;
             var lastSlotIdx = firstChargeIdx + slotsToCharge - 1;
@@ -239,6 +242,8 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
                                 }
                                 else {
                                     console.log("Successfully updated slot sequence");
+
+                                    done();
                                     successCallback();
                                 }
                             });
@@ -272,23 +277,25 @@ function clearForMember(memberName, successCallback, errorCallback) {
         errorCallback('Database error: ' + err.message);
     }
 
+    // TODO: done()
     db.connect(handleError, checkExistingBookings);
 
-    function checkExistingBookings(client) {
+    function checkExistingBookings(client, done) {
         client.query("SELECT * FROM timeslot WHERE member_name = $1", [memberName], function(err, res) {
             if (err) {
                 handleError(err);
             }
             else if (res.rows.length === 0) {
+                done();
                 successCallback(false); // no existing bookings were found
             }
             else {
-                clearExistingBookings(client);
+                clearExistingBookings(client, done);
             }
         });
     }
 
-    function clearExistingBookings(client) {
+    function clearExistingBookings(client, done) {
         var tx = db.beginTransaction(client, handleError);
         tx.query("UPDATE timeslot SET member_name = null, charge_time = null WHERE member_name = $1", [memberName], function(err) {
             if (err) {
@@ -300,6 +307,7 @@ function clearForMember(memberName, successCallback, errorCallback) {
                         handleError(err);
                     }
                     else {
+                        done();
                         successCallback(true);
                     }
                 });

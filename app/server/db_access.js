@@ -16,16 +16,17 @@ pg.defaults.ssl = true;
 /**
  * Establishes a connection to the database.
  *
- * @param errorCallback The function to call on error (error object passed as argument)
- * @param successCallback The function to call on success (client object passed as argument)
+ * @param errorCallback The function to call on error; error object passed as argument
+ * @param successCallback The function to call on success;
+ *                        client object and done() function to close the client are passed as arguments
  */
 function connect(errorCallback, successCallback) {
-    pg.connect(dbURL, function(err, client) {
+    pg.connect(dbURL, function(err, client, done) {
         if (err) {
             errorCallback(err);
         }
         else {
-            successCallback(client);
+            successCallback(client, done);
         }
     });
 }
