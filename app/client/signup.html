@@ -10,31 +10,34 @@
 
 <body ng-controller="SignupController">
 <div class="fixed-header">
-    <div class="centering-wrapper sheet-wrapper">
-        <h1 class="page-title">Victoria Park Tennis Club - ball machine sign up</h1>
-        <div class="page-info1">
-            To sign up, please follow the instructions below:<br/>
-        </div>
-        <div class="page-info2">
-            <div class="page-info-block">
-                <label>1. Enter your name in this box: <input class="name-input" type="text" ng-model="memberName" maxlength="12"/></label>
-                <label>2. Choose the desired duration:
-                    <input class="duration-input" type="radio" ng-model="duration" value="1"/> 1 hour
-                    <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
-                </label>
+    <div class="centering-wrapper">
+        <div class="header-left">
+            <img class="logo" src="VPTC_Logo2.jpg" alt="Victoria Park Tennis Club"/>
+        </div><!-- hack to remove gaps between inline blocks
+     --><div class="header-right">
+            <div class="page-title">Victoria Park Tennis Club - ball machine sign up</div>
+            <div class="message-container">
+                <div class="message" ng-if="errorMessage || message" ng-class="{'error-message': errorMessage, 'user-message': !errorMessage && message}">
+                    <div ng-if="errorMessage">{{errorMessage}}</div>
+                    <div ng-if="!errorMessage && message">{{message}}</div>
+                    <div class="btn dismiss-message-btn" ng-click="dismissMessages()">&#215;</div>
+                </div>
             </div>
-            <div class="page-info-block">
-                <label>3. Click on an open time slot</label>
-                <label>4. To cancel your bookings, enter your name and click: <input class="clear-input" type="button" value="cancel my bookings" ng-click="clear()" ng-disabled="!memberName"/></label>
+            <div class="page-info">
+                <div class="page-info-block">
+                    <label class="page-info-item">1. Enter your name: <input class="name-input" type="text" ng-model="memberName" maxlength="12"/></label>
+                    <label class="page-info-item">2. Choose a duration:
+                        <input class="duration-input" type="radio" ng-model="duration" value="1"/> 1 hour
+                        <input class="duration-input" type="radio" ng-model="duration" value="1/2"/> 1/2 hour
+                    </label>
+                </div>
+                <div class="page-info-block">
+                    <label class="page-info-item">3. Click on an open time slot</label>
+                    <label class="page-info-item">4. To cancel, enter your name and click: <input class="clear-input" type="button" value="cancel bookings" ng-click="clear()" ng-disabled="!memberName"/></label>
+                </div>
             </div>
         </div>
-        <div class="message-container">
-            <div class="message" ng-if="errorMessage || message" ng-class="{'error-message': errorMessage, 'user-message': !errorMessage && message}">
-                <div ng-if="errorMessage">{{errorMessage}}</div>
-                <div ng-if="!errorMessage && message">{{message}}</div>
-                <div class="btn dismiss-message-btn" ng-click="dismissMessages()">&#215;</div>
-            </div>
-        </div>
+
         <div class="table-header">
             <div class="column left-column">
                 <div class="column-header"></div>
