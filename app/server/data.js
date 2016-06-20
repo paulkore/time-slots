@@ -12,25 +12,23 @@ module.exports = {
 };
 
 /**
- * Initializes the database schema and populates it with records (only if necessary).
+ * Initializes the database schema and populates it with records (only if necessary);
+ * The process terminates if an error occurs during initialization.
+ *
+ * @param successCallback This function is called upon success
  */
-function initDatabase() {
+function initDatabase(successCallback) {
 
     /**
      * Terminates the process on DB error, because there's no point in running the app if initialization fails
      */
     function dieOnError(err) {
         if (err) {
-            console.error('Database error: ' + err.message);
+            console.error("Database error: " + err.message);
+            console.error("<<< TERMINATING APPLICATION >>>");
             process.exit(1);
         }
     }
-
-    /**
-     * This flag is for development purposes only!
-     * Setting it to TRUE will cause all data to be dropped and re-created fresh upon restart.
-     */
-    var resetData = process.env.TIMESLOTS_RESET_DATA || false;
 
     var days = def.getDays();
     var slotDefs = def.getSlotDefs();
@@ -52,11 +50,11 @@ function initDatabase() {
             ');',
             function (err) {
                 dieOnError(err);
-                checkData(client);
+                checkDataModel(client);
             });
     }
 
-    function checkData(client) {
+    function checkDataModel(client) {
         console.log('Verifying data model...');
         client.query('SELECT * FROM timeslot', function (err, res) {
             dieOnError(err);
@@ -66,11 +64,7 @@ function initDatabase() {
 
             if (count == 0) {
                 console.log('Data model not initialized.');
-                insertRecords(client);
-            }
-            else if (resetData === true) {
-                console.log('Re-creating data model (dev feature)');
-                recreateRecords(client);
+                createDataModel(client);
             }
             else if (count != expected) {
                 console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
@@ -78,57 +72,48 @@ function initDatabase() {
             }
             else {
                 console.log('Data model already initialized. ');
-                finish(client);
+                finish();
             }
         });
     }
 
-    function recreateRecords(client) {
-        console.log('Clearing all exisitng data...');
-        client.query('DELETE FROM timeslot', function(err) {
-            dieOnError(err);
-            insertRecords(client);
-        });
-    }
+    function createDataModel(client) {
+        console.log("Starting database transaction...");
+        var tx = db.beginTransaction(client, dieOnError);
 
-    function insertRecords(client) {
         console.log('Inserting data records...');
-        // TODO: Figure out a more efficient way to insert the records. This is too slow because each INSERT is committed separately.
-
         days.forEach(function (day, dayIdx) {
-            var lastDay = (dayIdx === days.length - 1);
-
             slotDefs.forEach(function (slotDef, slotIdx) {
-                var lastSlot = (slotIdx === slotDefs.length - 1);
-
                 // Peak times: Mon-Thurs 9-11am, and 7-9pm
                 var d = dayIdx;
                 var t = slotDef.time;
                 var peakTime = (d >= 1 && d <= 4) && ((t >= 9.0 && t < 11.0) || (t >= 19.0 && t < 21.0));
 
-                client.query('INSERT INTO timeslot (week_idx, day_idx, slot_idx, member_name, charge_time, peak_time) ' +
-                    'values ($1, $2, $3, $4, $5, $6)', [0, dayIdx, slotIdx, null, null, peakTime], function(err) {
-                    dieOnError(err);
-
-                    if (lastDay && lastSlot) {
-                        // commit data after the last statement finishes
-                        console.log('Finished inserting data records');
-                        finish(client);
-                    }
-                })
-
+                tx.query('INSERT INTO timeslot (week_idx, day_idx, slot_idx, member_name, charge_time, peak_time) ' +
+                    'values ($1, $2, $3, $4, $5, $6)', [0, dayIdx, slotIdx, null, null, peakTime],
+                    function(err) {
+                        dieOnError(err);
+                    });
             });
+        });
+
+        console.log("Committing database transaction...");
+        tx.commit(function(err) {
+            dieOnError(err);
+
+            console.log("Transaction committed successfully");
+            finish();
         });
     }
 
-    function finish(client) {
-        client.end();
+    function finish() {
+        console.log("========================");
+        console.log("  Application is ready  ");
+        console.log("========================\n");
 
-        console.log("========================")
-        console.log("  Application is ready   ");
-        console.log("========================\n")
+        successCallback();
     }
-
+    
 }
 
 /**
@@ -248,7 +233,6 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
                         }
                         else {
                             console.log("Successfully updated slot sequence");
-                            client.end();
                             successCallback();
                         }
                     })
@@ -302,7 +286,6 @@ function clearForMember(memberName, successCallback, errorCallback) {
                 handleError(err);
             }
             else {
-                client.end();
                 successCallback(true);
             }
         });

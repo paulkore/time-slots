@@ -74,7 +74,8 @@ function TimeSlotsApp() {
         };
 
         self.app.configure(function() {
-            self.app.use(express.bodyParser());
+            self.app.use(express.urlencoded());
+            self.app.use(express.json());
             self.app.use(express.cookieParser());
             // self.app.use(express.session({ secret: 'cool beans' })); // TODO: enable password protection
             self.app.use(express.methodOverride());
@@ -88,21 +89,24 @@ function TimeSlotsApp() {
 
     /**
      *  Initialize the application.
+     *
+     *  @param successCallback This function is called when initialization is complete
      */
-    self.initialize = function() {
+    self.initialize = function(successCallback) {
         self.setupTerminationHandlers();
         self.initializeServer();
-        data.initDatabase();
+        data.initDatabase(successCallback);
     };
 
     /**
      *  Start the application server.
      */
     self.start = function() {
-        self.initialize();
-
-        self.app.listen(self.port, function() {
-            console.log('%s: Node server started on %s ...', new Date(Date.now()), self.port);
+        self.initialize(function() {
+            // upon initialization success
+            self.app.listen(self.port, function() {
+                console.log('%s: Node server started on %s ...', new Date(Date.now()), self.port);
+            });
         });
     };
 

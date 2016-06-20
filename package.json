@@ -21,7 +21,8 @@
   "dependencies": {
     "express": "~3.4.4",
     "moment": "^2.10.6",
-    "pg": "^4.4.1"
+    "pg": "^4.4.1",
+    "pg-transaction": ">= 1.0.4"
   },
   "devDependencies": {},
   "bundleDependencies": [],
