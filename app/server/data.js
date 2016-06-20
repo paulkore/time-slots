@@ -248,6 +248,7 @@ function bookSlotSequence(weekIdx, dayIdx, slotIdx, memberName, slotsToUse, slot
                         }
                         else {
                             console.log("Successfully updated slot sequence");
+                            client.end();
                             successCallback();
                         }
                     })
@@ -301,6 +302,7 @@ function clearForMember(memberName, successCallback, errorCallback) {
                 handleError(err);
             }
             else {
+                client.end();
                 successCallback(true);
             }
         });
