@@ -39,7 +39,7 @@ function initDatabase() {
     db.connect(dieOnError, checkSchema);
 
     function checkSchema(client) {
-        console.log('Initializing database schema...');
+        console.log('Verifying database schema...');
         client.query(
             'CREATE TABLE IF NOT EXISTS timeslot( ' +
             'week_idx INT NOT NULL, ' +
@@ -65,20 +65,20 @@ function initDatabase() {
             var expected = days.length * slotDefs.length;
 
             if (count == 0) {
-                console.log('Data not initialized.');
-                insertRecords();
+                console.log('Data model not initialized.');
+                insertRecords(client);
             }
             else if (resetData === true) {
                 console.log('Re-creating data model (dev feature)');
-                recreateRecords();
+                recreateRecords(client);
             }
             else if (count != expected) {
                 console.error('Unexpected number of records: ' + count + ', expected: ' + expected);
-                process.exit(1); // something is really wrong here... don't carry on
+                process.exit(1); // Something is really wrong here - abort. Someone will have to take a look.
             }
             else {
                 console.log('Data model already initialized. ');
-                client.end();
+                finish(client);
             }
         });
     }
@@ -87,7 +87,7 @@ function initDatabase() {
         console.log('Clearing all exisitng data...');
         client.query('DELETE FROM timeslot', function(err) {
             dieOnError(err);
-            insertRecords();
+            insertRecords(client);
         });
     }
 
@@ -113,12 +113,20 @@ function initDatabase() {
                     if (lastDay && lastSlot) {
                         // commit data after the last statement finishes
                         console.log('Finished inserting data records');
-                        client.end();
+                        finish(client);
                     }
                 })
 
             });
         });
+    }
+
+    function finish(client) {
+        client.end();
+
+        console.log("========================")
+        console.log("  Application is ready   ");
+        console.log("========================\n")
     }
 
 }
